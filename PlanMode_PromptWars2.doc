@@ -1,0 +1,541 @@
+<html xmlns:o="urn:schemas-microsoft-com:office:office"
+      xmlns:w="urn:schemas-microsoft-com:office:word"
+      xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta charset="UTF-8">
+<meta name="ProgId" content="Word.Document">
+<meta name="Generator" content="Microsoft Word">
+<style>
+  body { font-family: Calibri, Arial, sans-serif; font-size: 11pt; color: #111; margin: 72pt; line-height: 1.5; }
+  h1 { font-size: 22pt; color: #1a56db; border-bottom: 2pt solid #1a56db; padding-bottom: 6pt; margin-top: 0; }
+  h2 { font-size: 15pt; color: #1e429f; margin-top: 22pt; margin-bottom: 4pt; border-bottom: 1pt solid #bfdbfe; padding-bottom: 3pt; }
+  h3 { font-size: 12pt; color: #374151; margin-top: 14pt; margin-bottom: 2pt; }
+  h4 { font-size: 11pt; color: #6b7280; margin-top: 10pt; margin-bottom: 2pt; font-style: italic; }
+  p { margin: 5pt 0; }
+  table { border-collapse: collapse; width: 100%; margin: 8pt 0 14pt 0; }
+  th { background: #1e429f; color: #fff; padding: 6pt 10pt; text-align: left; font-size: 10pt; }
+  td { border: 1pt solid #d1d5db; padding: 5pt 10pt; font-size: 10pt; vertical-align: top; }
+  tr:nth-child(even) td { background: #f9fafb; }
+  code { font-family: Consolas, 'Courier New', monospace; background: #f3f4f6; padding: 1pt 4pt; font-size: 10pt; }
+  .code-block { font-family: Consolas, 'Courier New', monospace; background: #f3f4f6; border: 1pt solid #e5e7eb; border-left: 4pt solid #1a56db; padding: 10pt 14pt; margin: 8pt 0; font-size: 10pt; white-space: pre; }
+  .callout { background: #eff6ff; border-left: 4pt solid #1a56db; padding: 10pt 14pt; margin: 10pt 0; font-size: 10pt; }
+  .callout-yellow { background: #fffbeb; border-left: 4pt solid #f59e0b; padding: 10pt 14pt; margin: 10pt 0; font-size: 10pt; }
+  ul, ol { margin: 4pt 0; padding-left: 22pt; }
+  li { margin: 3pt 0; }
+  hr { border: none; border-top: 1pt solid #e5e7eb; margin: 22pt 0; }
+  .meta { color: #6b7280; font-size: 10pt; margin-bottom: 20pt; }
+  .label { display: inline-block; background: #dbeafe; color: #1e40af; padding: 1pt 7pt; border-radius: 10pt; font-size: 9pt; font-weight: bold; margin-right: 4pt; }
+  .label-green { background: #d1fae5; color: #065f46; }
+  .label-yellow { background: #fef3c7; color: #92400e; }
+  .label-red { background: #fee2e2; color: #991b1b; }
+  .section-num { color: #9ca3af; font-size: 9pt; margin-right: 6pt; }
+  .chat-q { background: #f3f4f6; border-left: 4pt solid #6b7280; padding: 10pt 14pt; margin: 10pt 0; font-size: 10pt; }
+  .chat-a { background: #eff6ff; border-left: 4pt solid #1a56db; padding: 10pt 14pt; margin: 10pt 0; font-size: 10pt; }
+  .chat-label { font-size: 8pt; font-weight: bold; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; margin-bottom: 4pt; }
+</style>
+</head>
+<body>
+
+<h1>Plan Mode Transcript &amp; Design Document</h1>
+<p class="meta">
+  <strong>Project:</strong> Prompt Wars 2 — Problem #1: Wiom Netbox Physical Verification Tool &nbsp;|&nbsp;
+  <strong>Date:</strong> March 18, 2026 &nbsp;|&nbsp;
+  <strong>Prepared by:</strong> Claude Sonnet 4.6 (AI pair programmer)
+</p>
+
+<div class="callout">
+  <strong>About this document:</strong> This document captures the full planning conversation and architectural design produced during Plan Mode for the Wiom Netbox Physical Verification Tool — a hackathon entry for Prompt Wars 2. It is intended as a reference for team members picking up this project.
+</div>
+
+<hr>
+
+<h2>Part 1 — Problem Context &amp; Design Brief</h2>
+
+<h3>The Problem Wiom Has</h3>
+<p>
+  Wiom distributes Netbox routers to field partners (small telecom resellers) in batches.
+  When a batch arrives, a partner acknowledges receipt by <strong>count only</strong> — not by individual device ID.
+  This creates a traceability gap from day one.
+</p>
+<p>
+  From that point forward, devices move through a lifecycle with multiple states:
+</p>
+<table>
+  <tr><th>State</th><th>Meaning</th></tr>
+  <tr><td><code>at_wiom</code></td><td>Returned to warehouse, ready to redeploy</td></tr>
+  <tr><td><code>at_partner</code></td><td>Physically held by the partner (stock)</td></tr>
+  <tr><td><code>at_customer</code></td><td>Deployed to an end customer on an active plan</td></tr>
+  <tr><td><code>unknown</code></td><td>Location not determinable from system data</td></tr>
+</table>
+<p>
+  Grey zones emerge constantly:
+</p>
+<ul>
+  <li>Partners pick up devices from customers without logging a ticket</li>
+  <li>Customer plans expire but device recovery is not recorded</li>
+  <li>Devices are transferred between partner windows outside of approved processes</li>
+  <li>Batch dispatch records show delivery to partner X but device physically ends up with partner Y</li>
+</ul>
+
+<h3>The Gap</h3>
+<p>
+  Wiom has <strong>device-level dispatch data</strong> but no scalable way to verify physical possession. The only current option is a field visit — expensive, slow, and not scalable across 100+ partners nationally.
+</p>
+
+<h3>The Opportunity</h3>
+<p>
+  Partners already have smartphones. Every Netbox router has a barcode label with the device ID / MAC address. The core insight: <strong>partners can conduct their own stocktake digitally</strong>, scanning devices with their phone cameras, and Wiom reconciles the results against its dispatch database automatically — no field visit required.
+</p>
+
+<hr>
+
+<h2>Part 2 — Solution Design Decisions</h2>
+
+<h3>Decision 1 — Hosted Web App (not a native app)</h3>
+<div class="callout-yellow">
+  <strong>Considered:</strong> Native Android app, WhatsApp bot, Google Forms + Sheets<br>
+  <strong>Chosen:</strong> Hosted web app (Progressive Web App pattern)
+</div>
+<p><strong>Rationale:</strong></p>
+<ul>
+  <li>Partners have heterogeneous devices. A web app works on any phone with a browser — no install needed</li>
+  <li>ZXing-js enables camera-based barcode scanning directly in the browser via WebRTC</li>
+  <li>Ops portal on desktop PC works in the same deployment</li>
+  <li>Can be shared as a URL — judges can access it immediately</li>
+</ul>
+
+<h3>Decision 2 — Render.com Free Tier for Hosting</h3>
+<div class="callout-yellow">
+  <strong>Considered:</strong> Vercel, Railway, Fly.io, local ngrok tunnel<br>
+  <strong>Chosen:</strong> Render.com free tier
+</div>
+<p><strong>Rationale:</strong></p>
+<ul>
+  <li>Supports persistent Node.js web services (unlike Vercel serverless which can't hold in-memory sessions)</li>
+  <li>Free tier sufficient for demo traffic</li>
+  <li>Single <code>render.yaml</code> config file — one-click deploy from GitHub</li>
+  <li>HTTPS out of the box (required for camera access on iOS Safari)</li>
+</ul>
+
+<h3>Decision 3 — No Framework Frontend</h3>
+<div class="callout-yellow">
+  <strong>Considered:</strong> React, Vue, Svelte<br>
+  <strong>Chosen:</strong> Vanilla HTML/CSS/JS
+</div>
+<p><strong>Rationale:</strong></p>
+<ul>
+  <li>Faster to build for a time-boxed hackathon</li>
+  <li>No build step — files served directly by Express static middleware</li>
+  <li>Loads fast on low-end Android devices with slow connectivity (target partner profile)</li>
+  <li>Easier for team members unfamiliar with a specific framework to read and modify</li>
+</ul>
+
+<h3>Decision 4 — In-Memory Data Store</h3>
+<div class="callout-yellow">
+  <strong>Considered:</strong> SQLite, PostgreSQL, Firebase<br>
+  <strong>Chosen:</strong> CSV files loaded into JavaScript Maps at startup
+</div>
+<p><strong>Rationale:</strong></p>
+<ul>
+  <li>Hackathon scope — no database setup time required</li>
+  <li>CSVs are easy to inspect, modify, and regenerate for demos</li>
+  <li>Sub-millisecond lookups on ~100 device dataset using Map data structures</li>
+  <li>In-memory audit sessions are sufficient for a single-session demo</li>
+</ul>
+
+<hr>
+
+<h2>Part 3 — Full Architecture Plan</h2>
+
+<h3>3.1 Two-Portal Structure</h3>
+<table>
+  <tr><th>Portal</th><th>Entry Point</th><th>Users</th><th>Device</th></tr>
+  <tr><td>Ops Portal</td><td>/ops</td><td>Wiom operations team</td><td>PC browser (desktop-first)</td></tr>
+  <tr><td>Partner Portal</td><td>/partner</td><td>Field partner staff</td><td>Mobile phone (mobile-first)</td></tr>
+</table>
+
+<h3>3.2 Authentication Design</h3>
+<p><strong>Ops Login:</strong> Single hardcoded credential — <code>admin / wiom@2026</code>. Session cookie on login.</p>
+<p><strong>Partner Login:</strong> Username + 4-digit PIN. On mobile: large on-screen numeric keypad. On desktop: standard text input. Pre-seeded from <code>partners.csv</code>.</p>
+<table>
+  <tr><th>Partner</th><th>Username</th><th>PIN</th></tr>
+  <tr><td>Rajesh Telecom (Delhi)</td><td>partner_rajesh</td><td>1234</td></tr>
+  <tr><td>Sunita Networks (Mumbai)</td><td>partner_sunita</td><td>2345</td></tr>
+  <tr><td>KP Enterprises (Bangalore)</td><td>partner_kp</td><td>3456</td></tr>
+  <tr><td>Mehta Connect (Hyderabad)</td><td>partner_mehta</td><td>4567</td></tr>
+  <tr><td>Sharma Fibernet (Pune)</td><td>partner_sharma</td><td>5678</td></tr>
+</table>
+
+<h3>3.3 Reconciliation Engine (<code>reconcile.js</code>)</h3>
+<p>For each partner, the engine computes an "expected accountability list" — the devices that the partner is responsible for having physically:</p>
+<div class="code-block">Expected at partner =
+  All devices dispatched to partner
+  MINUS devices returned to warehouse  (state: at_wiom)
+  MINUS devices on active customer plans (state: at_customer + active ticket)
+  MINUS devices with completed pickup tickets (marked recovered)</div>
+<p>
+  Devices at customer with <strong>expired</strong> tickets are included in the expected list, marked as <code>grey_zone: true</code>, because the plan has lapsed and the device should have been returned.
+</p>
+
+<h3>3.4 Grey Zone Resolution (<code>stateCorrector.js</code>)</h3>
+<p>
+  When a partner scans a device that is NOT on their expected list, the engine runs a lifecycle check to categorise it:
+</p>
+<table>
+  <tr><th>Condition</th><th>Resolution Category</th><th>Action</th></tr>
+  <tr>
+    <td>Dispatched to THIS partner + expired ticket</td>
+    <td><span class="label label-green">STATE_CORRECTED</span></td>
+    <td>State updated to <code>at_partner_recovered_unlogged</code> in memory. Logged to corrections report.</td>
+  </tr>
+  <tr>
+    <td>Dispatched to THIS partner + system says <code>at_customer</code> but no active ticket</td>
+    <td><span class="label label-green">STATE_CORRECTED</span></td>
+    <td>State updated to <code>at_partner_recovered_unlogged</code>. Customer plan likely lapsed.</td>
+  </tr>
+  <tr>
+    <td>Dispatched to THIS partner + no ticket at all</td>
+    <td><span class="label label-yellow">NEEDS_INVESTIGATION</span></td>
+    <td>Flagged for manual review. No state change.</td>
+  </tr>
+  <tr>
+    <td>Dispatched to a DIFFERENT partner</td>
+    <td><span class="label label-red">CROSS_PARTNER_UNAUTHORIZED</span></td>
+    <td>Flagged as unauthorized possession. No state change.</td>
+  </tr>
+  <tr>
+    <td>Not in Wiom's system at all</td>
+    <td><span class="label label-red">UNKNOWN_DEVICE</span></td>
+    <td>Flagged as unknown. No state change.</td>
+  </tr>
+</table>
+
+<h3>3.5 File Structure</h3>
+<div class="code-block">
+/wiom-audit-tool
+  /backend
+    server.js           ← Express server — all routes, session auth, API
+    reconcile.js        ← Expected inventory computation per partner
+    csvLoader.js        ← Parse all 4 CSVs into Maps on startup
+    stateCorrector.js   ← Grey zone lifecycle resolution (5 categories)
+    mockDataGen.js      ← Generates all mock CSVs (run at build time)
+  /frontend
+    /ops
+      login.html        ← Ops login card (username + password)
+      index.html        ← Dataset overview + partner credentials table
+      dashboard.html    ← Live reconciliation table, auto-refresh 15s
+      partner-detail.html ← Per-partner device breakdown + corrections
+    /partner
+      login.html        ← PIN keypad login (mobile) + text input (desktop)
+      welcome.html      ← Welcome screen + 4-step instructions
+      audit.html        ← Live scan/checklist with ZXing camera
+      complete.html     ← Summary + submit button
+    /css
+      ops.css           ← Desktop-first layout (max-width 1200px container)
+      partner.css       ← Mobile-first, large touch targets (44px+ tap areas)
+  /data
+    dispatch.csv        ← 99 device dispatch records across 5 partners
+    device_states.csv   ← Current lifecycle state per device
+    pickup_tickets.csv  ← 13 customer pickup/return tickets
+    partners.csv        ← Partner master data + credentials
+  package.json
+  render.yaml           ← Render.com free tier deployment config
+  progress.md           ← Living task tracker
+  Project_Context_PromptWars2.doc ← Team onboarding document
+</div>
+
+<hr>
+
+<h2>Part 4 — UI/UX Flow Design</h2>
+
+<h3>4.1 Ops Portal Flow (PC Browser)</h3>
+
+<h4>Screen 1 — Login</h4>
+<ul>
+  <li>Centered login card with Wiom branding, full-page blue gradient background</li>
+  <li>Username + Password fields, Login button</li>
+  <li>Credential: <code>admin / wiom@2026</code></li>
+</ul>
+
+<h4>Screen 2 — Home (Data &amp; Setup)</h4>
+<ul>
+  <li>Demo mode banner: "✅ Demo mode active — 5 partners, ~100 devices pre-loaded"</li>
+  <li>Dataset card: shows total partners + total devices in accountability lists</li>
+  <li>Partner credentials table: Name | City | Username | PIN | Expected Devices</li>
+  <li>Partner portal URL display (copyable)</li>
+  <li>CTA: "View Dashboard →"</li>
+</ul>
+
+<h4>Screen 3 — Dashboard</h4>
+<ul>
+  <li>Aggregate stats row: Total Devices | Verified | Missing | Unexpected | Audits Submitted</li>
+  <li>Download bar: Full Reconciliation CSV | State Corrections CSV | Missing Devices CSV</li>
+  <li>Partner table: Name | City | Expected | Status badge | ✅ | ❌ | ⚠️ | Submitted At</li>
+  <li>Status badges: Not Started (grey) / In Progress (yellow) / Submitted (green)</li>
+  <li>Clickable rows → partner detail view</li>
+  <li>Auto-refreshes every 15 seconds</li>
+</ul>
+
+<h4>Screen 4 — Partner Detail</h4>
+<ul>
+  <li>Back link to dashboard</li>
+  <li>Header: partner name, city, username/PIN, status badge, submitted timestamp</li>
+  <li>5-stat row: Expected | ✅ Verified | ❌ Missing | ⚠️ Unexpected | 🔄 Corrected</li>
+  <li>Two-column grid:
+    <ul>
+      <li>Left: expected device list (✅/❌ per device, device ID + MAC + batch + grey zone tag)</li>
+      <li>Right: unexpected scans table + state corrections log</li>
+    </ul>
+  </li>
+</ul>
+
+<h3>4.2 Partner Portal Flow (Mobile + PC)</h3>
+
+<h4>Screen 1 — Login</h4>
+<ul>
+  <li>Full-screen gradient background, centered card</li>
+  <li>Username text input</li>
+  <li>PIN display (shows ●●●● as digits entered)</li>
+  <li>On-screen numeric keypad (3×4 grid, large tap targets, backspace key)</li>
+  <li>Keyboard input also works for desktop accessibility</li>
+  <li>Login button enabled only once username + 4 digits entered</li>
+</ul>
+
+<h4>Screen 2 — Welcome &amp; Instructions</h4>
+<ul>
+  <li>"Welcome, [Partner Name]"</li>
+  <li>Large bold device count: e.g. "18 devices to account for"</li>
+  <li>4-step instruction cards (2×2 grid on desktop, stacked on mobile):
+    <ol>
+      <li>📦 Collect — gather all devices including recovered from customers</li>
+      <li>🔄 Arrange — place face-down so barcode label is visible</li>
+      <li>📱 Scan — use camera to scan each barcode one by one</li>
+      <li>✅ Submit — submit audit when complete</li>
+    </ol>
+  </li>
+  <li>Large CTA: "Start Audit →" (continues audit if already started)</li>
+</ul>
+
+<h4>Screen 3 — Live Audit</h4>
+<ul>
+  <li>Sticky top bar: "15 remaining of 23" + animated progress bar</li>
+  <li>Camera viewport (hidden by default, slides in on scan button tap):
+    <ul>
+      <li>Full-width video feed</li>
+      <li>Semi-transparent overlay with scan frame + animated scan line</li>
+      <li>Close (✕) button</li>
+      <li>Prefers rear/environment-facing camera on mobile</li>
+    </ul>
+  </li>
+  <li>Large "📷 Scan Barcode" button</li>
+  <li>"Enter Device ID manually" link below (toggles input row)</li>
+  <li>Scrollable checklist of expected devices:
+    <ul>
+      <li>⬜ Pending (white) → ✅ Verified (green flash + tick) on scan</li>
+      <li>Device ID + MAC address per row</li>
+      <li>⚠ grey zone tag for expired-ticket devices</li>
+    </ul>
+  </li>
+  <li>Toast notifications:
+    <ul>
+      <li>Green: "✅ DEV01021 verified!"</li>
+      <li>Yellow: "🚨 Unauthorized: DEV01089"</li>
+      <li>Teal: "🔄 State corrected" for grey zone resolutions</li>
+    </ul>
+  </li>
+  <li>Sticky bottom submit bar: "Review &amp; Submit →" appears after first scan</li>
+</ul>
+
+<h4>Screen 4 — Complete &amp; Submit</h4>
+<ul>
+  <li>Dynamic hero:
+    <ul>
+      <li>All verified: "🎉 All devices accounted for!"</li>
+      <li>Some missing: "⚠️ Audit incomplete — N devices not found"</li>
+    </ul>
+  </li>
+  <li>Summary card: ✅ Verified N | ❌ Not found N | ⚠️ Extra devices N</li>
+  <li>"Submit Audit" large button → locks audit, sets submitted_at timestamp</li>
+  <li>Post-submit: "✅ Submitted. Wiom ops team has been notified."</li>
+</ul>
+
+<hr>
+
+<h2>Part 5 — Mock Data Design</h2>
+
+<p>The mock data generator (<code>backend/mockDataGen.js</code>) creates 99 device records across 5 partners, each with a pre-designed scenario that demonstrates a different aspect of the reconciliation engine.</p>
+
+<table>
+  <tr><th>Partner</th><th>Devices Dispatched</th><th>Scenario Design</th></tr>
+  <tr>
+    <td>Rajesh Telecom</td>
+    <td>20 (15 expected)</td>
+    <td><strong>Clean case.</strong> 15 at_partner (expected), 3 at_customer with active tickets (legitimately at customer), 2 at_wiom (returned). Partner scans all 15 → 100% verified. Great for showing the base case.</td>
+  </tr>
+  <tr>
+    <td>Sunita Networks</td>
+    <td>20 (18 expected)</td>
+    <td><strong>Missing + grey zone.</strong> 13 normal expected, 3 partner will not scan (shows ❌ Missing), 2 at_customer with expired tickets (grey zone — shows ⚠ tag), 2 at_wiom returned. Best scenario for demonstrating the grey zone concept.</td>
+  </tr>
+  <tr>
+    <td>KP Enterprises</td>
+    <td>21 (18 expected)</td>
+    <td><strong>Unauthorized device.</strong> 18 normal expected, 2 at_customer active, plus 1 device that was dispatched to Rajesh Telecom — if KP scans it, it triggers 🚨 Unauthorized. Demonstrates cross-partner possession detection.</td>
+  </tr>
+  <tr>
+    <td>Mehta Connect</td>
+    <td>18 (15 expected)</td>
+    <td><strong>All categories mix.</strong> 10 will be scanned (verified), 3 will not (missing), 2 grey zone expired tickets, 2 at_customer active, 1 returned. Best scenario for showing the full dashboard breakdown.</td>
+  </tr>
+  <tr>
+    <td>Sharma Fibernet</td>
+    <td>20 (17 expected)</td>
+    <td><strong>In-progress demo.</strong> 17 expected, 2 at_customer active, 1 returned. Scan some devices but do not submit to show the yellow "In Progress" badge on the ops dashboard.</td>
+  </tr>
+</table>
+
+<hr>
+
+<h2>Part 6 — Build Sequence (Implementation Order)</h2>
+
+<p>The following sequence was planned to minimise re-work and ensure each layer could be tested before the next was built:</p>
+
+<ol>
+  <li><strong>mockDataGen.js</strong> — generate all CSVs first so every subsequent module has real data to work with</li>
+  <li><strong>csvLoader.js</strong> — parse CSVs into Maps; test lookups are correct</li>
+  <li><strong>reconcile.js</strong> — compute expected lists; verify counts match designed scenarios</li>
+  <li><strong>stateCorrector.js</strong> — implement grey zone resolution; unit test all 5 categories</li>
+  <li><strong>server.js</strong> — wire all routes and middleware; test all API endpoints with curl</li>
+  <li><strong>Partner UI</strong> — build 4 screens in order (login → welcome → audit → complete)</li>
+  <li><strong>Ops UI</strong> — build 4 screens (login → home → dashboard → detail)</li>
+  <li><strong>ZXing barcode scanning</strong> — integrate into audit.html after base UI is stable</li>
+  <li><strong>Deploy to Render.com</strong> — push to GitHub, connect repo, verify live URLs</li>
+  <li><strong>End-to-end test</strong> — full demo flow on mobile + PC</li>
+</ol>
+
+<hr>
+
+<h2>Part 7 — Deployment Plan</h2>
+
+<h3>Render.com Configuration (<code>render.yaml</code>)</h3>
+<div class="code-block">
+services:
+  - type: web
+    name: wiom-audit
+    env: node
+    buildCommand: npm install &amp;&amp; node backend/mockDataGen.js
+    startCommand: node backend/server.js
+    plan: free
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+</div>
+
+<p><strong>Build command rationale:</strong> <code>mockDataGen.js</code> runs at build time to regenerate the CSVs fresh on every deploy. This ensures the demo data is clean and consistent regardless of prior state.</p>
+
+<h3>Deployment Steps</h3>
+<ol>
+  <li>Push repo to GitHub: <code>git push -u origin master</code></li>
+  <li>Go to render.com → New + → Web Service</li>
+  <li>Connect <code>bulkentropy/wiom-audit-tool</code></li>
+  <li>Render auto-reads <code>render.yaml</code> — confirm settings</li>
+  <li>Click Deploy (~2 min build time)</li>
+  <li>Live at <code>https://wiom-audit.onrender.com</code></li>
+</ol>
+
+<hr>
+
+<h2>Part 8 — Constraints &amp; Trade-offs Accepted</h2>
+
+<table>
+  <tr><th>Constraint</th><th>Decision</th><th>Acceptable Because</th></tr>
+  <tr>
+    <td>In-memory sessions</td>
+    <td>Sessions cleared on server restart</td>
+    <td>Demo has no restarts; judges can re-login in 5 seconds</td>
+  </tr>
+  <tr>
+    <td>In-memory audit state</td>
+    <td>Scans lost if server restarts</td>
+    <td>Demo is conducted in a single session; data regenerates cleanly</td>
+  </tr>
+  <tr>
+    <td>Hardcoded credentials</td>
+    <td>admin/wiom@2026 in source code</td>
+    <td>This is a demo tool, not a production system. Credentials are intentionally visible for judge review.</td>
+  </tr>
+  <tr>
+    <td>No CSV upload in demo mode</td>
+    <td>Upload UI exists but backend not wired</td>
+    <td>Pre-loaded demo data covers all judge-facing scenarios without needing upload</td>
+  </tr>
+  <tr>
+    <td>~100 devices only</td>
+    <td>Not 500 as originally planned</td>
+    <td>100 is more than sufficient to show all 5 partner scenarios clearly; keeps demo snappy</td>
+  </tr>
+</table>
+
+<hr>
+
+<h2>Part 9 — Verification &amp; Demo Script</h2>
+
+<p>The following script was designed to let a judge verify the full system in under 5 minutes:</p>
+
+<ol>
+  <li>
+    <strong>Ops login:</strong> Open <code>/ops</code> → login as <code>admin / wiom@2026</code>
+    <br><em>Expected: home page loads with 5 partners listed and credential table visible</em>
+  </li>
+  <li>
+    <strong>View credentials:</strong> Note partner usernames and PINs in the table
+    <br><em>Expected: partner_sunita / 2345 visible among others</em>
+  </li>
+  <li>
+    <strong>Open dashboard:</strong> Click "View Dashboard"
+    <br><em>Expected: all 5 partners show "Not Started" status badges</em>
+  </li>
+  <li>
+    <strong>Partner login:</strong> Open <code>/partner</code> in another tab → login as <code>partner_sunita / 2345</code>
+    <br><em>Expected: welcome screen shows "18 devices to account for"</em>
+  </li>
+  <li>
+    <strong>Start audit:</strong> Click "Start Audit →" → click "Enter Device ID manually"
+    <br><em>Expected: audit screen shows checklist of 18 devices, 2 with ⚠ grey zone tags</em>
+  </li>
+  <li>
+    <strong>Scan devices:</strong> Enter a few device IDs from the checklist
+    <br><em>Expected: rows turn green, counter decrements, progress bar advances</em>
+  </li>
+  <li>
+    <strong>Test unauthorized:</strong> Enter a device ID from a different partner's list
+    <br><em>Expected: 🚨 Unauthorized toast appears, device not added to checklist</em>
+  </li>
+  <li>
+    <strong>Submit:</strong> Click "Review &amp; Submit →" → "Submit Audit"
+    <br><em>Expected: confirmation screen shows verified/missing counts, submitted notice</em>
+  </li>
+  <li>
+    <strong>Back to ops dashboard:</strong> Refresh the ops dashboard tab
+    <br><em>Expected: Sunita Networks row now shows "Submitted" green badge with timestamp</em>
+  </li>
+  <li>
+    <strong>Partner detail:</strong> Click the Sunita row
+    <br><em>Expected: device-level breakdown shows ✅ verified and ❌ missing counts</em>
+  </li>
+  <li>
+    <strong>Download reports:</strong> Click "Full Reconciliation CSV" and "Missing Devices CSV"
+    <br><em>Expected: CSV files download with correct device data</em>
+  </li>
+</ol>
+
+<hr>
+
+<p style="color:#9ca3af; font-size:9pt; text-align:center;">
+  Plan Mode Transcript &nbsp;|&nbsp; Prompt Wars 2 &nbsp;|&nbsp; Wiom Netbox Physical Verification Tool &nbsp;|&nbsp; March 18, 2026
+</p>
+
+</body>
+</html>
