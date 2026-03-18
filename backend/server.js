@@ -16,8 +16,7 @@ const { resolveUnexpected }   = require('./stateCorrector');
 const app  = express();
 const PORT = process.env.PORT || 3000;
 
-// ── Static files ──────────────────────────────────────────────────────────────
-app.use(express.static(path.join(__dirname, '..', 'frontend')));
+// ── Body parsing + Sessions (must come before routes) ────────────────────────
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -64,6 +63,10 @@ function requirePartner(req, res, next) {
   if (req.session && req.session.partnerId) return next();
   res.status(401).json({ error: 'Unauthorized' });
 }
+
+// ── Static files (CSS/JS — served after route declarations to avoid
+//    directory-index conflicts with /ops and /partner route prefixes) ──────────
+app.use(express.static(path.join(__dirname, '..', 'frontend'), { redirect: false }));
 
 // ── Routing — serve HTML pages ────────────────────────────────────────────────
 app.get('/', (req, res) => res.redirect('/ops'));
