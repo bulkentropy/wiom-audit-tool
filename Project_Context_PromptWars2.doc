@@ -1,0 +1,324 @@
+<html xmlns:o="urn:schemas-microsoft-com:office:office"
+      xmlns:w="urn:schemas-microsoft-com:office:word"
+      xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta charset="UTF-8">
+<meta name="ProgId" content="Word.Document">
+<meta name="Generator" content="Microsoft Word">
+<!--[if gte mso 9]>
+<xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml>
+<![endif]-->
+<style>
+  body { font-family: Calibri, Arial, sans-serif; font-size: 11pt; color: #000; margin: 72pt; }
+  h1 { font-size: 20pt; color: #1a56db; border-bottom: 2pt solid #1a56db; padding-bottom: 4pt; margin-top: 0; }
+  h2 { font-size: 14pt; color: #1e429f; margin-top: 18pt; margin-bottom: 4pt; }
+  h3 { font-size: 12pt; color: #374151; margin-top: 12pt; margin-bottom: 2pt; }
+  p { margin: 6pt 0; line-height: 1.5; }
+  table { border-collapse: collapse; width: 100%; margin: 8pt 0; }
+  th { background: #1a56db; color: #fff; padding: 6pt 10pt; text-align: left; font-size: 10pt; }
+  td { border: 1pt solid #d1d5db; padding: 5pt 10pt; font-size: 10pt; vertical-align: top; }
+  tr:nth-child(even) td { background: #f9fafb; }
+  code, .code { font-family: Consolas, 'Courier New', monospace; background: #f3f4f6; padding: 1pt 4pt; font-size: 10pt; border-radius: 2pt; }
+  .code-block { font-family: Consolas, 'Courier New', monospace; background: #f3f4f6; border: 1pt solid #e5e7eb; padding: 10pt; margin: 8pt 0; font-size: 10pt; white-space: pre; }
+  .badge-green  { background: #d1fae5; color: #065f46; padding: 1pt 6pt; border-radius: 10pt; font-size: 9pt; font-weight: bold; }
+  .badge-yellow { background: #fef3c7; color: #92400e; padding: 1pt 6pt; border-radius: 10pt; font-size: 9pt; font-weight: bold; }
+  .badge-red    { background: #fee2e2; color: #991b1b; padding: 1pt 6pt; border-radius: 10pt; font-size: 9pt; font-weight: bold; }
+  .section-box { border-left: 4pt solid #1a56db; padding-left: 10pt; margin: 10pt 0; background: #eff6ff; padding: 8pt 12pt; }
+  ul { margin: 4pt 0; padding-left: 20pt; }
+  li { margin: 3pt 0; }
+  .meta { color: #6b7280; font-size: 10pt; margin-bottom: 18pt; }
+  hr { border: none; border-top: 1pt solid #e5e7eb; margin: 20pt 0; }
+</style>
+</head>
+<body>
+
+<h1>📡 Wiom Netbox Physical Verification Tool</h1>
+<p class="meta">
+  <strong>Project:</strong> Prompt Wars 2 — Problem #1 &nbsp;|&nbsp;
+  <strong>Date:</strong> March 18, 2026 &nbsp;|&nbsp;
+  <strong>Repo:</strong> https://github.com/bulkentropy/wiom-audit-tool &nbsp;|&nbsp;
+  <strong>Status:</strong> <span class="badge-yellow">Deploying to Render</span>
+</p>
+
+<hr>
+
+<h2>1. Problem Statement</h2>
+<p>
+  Wiom distributes Netbox routers to partners in batches. Partners acknowledge receipt <strong>by count, not by device ID</strong>, creating a traceability gap from day one. Devices move through states (at Wiom → at partner → at customer → recovered → returned), but grey zones exist: unlogged pickups, expired tickets, cross-window transfers.
+</p>
+<p>
+  Wiom has device-level dispatch data but no scalable way to verify physical possession without expensive field visits. This tool solves that with a <strong>zero-field-visit, partner-driven digital stocktake</strong> — hosted on the web and shareable with judges.
+</p>
+
+<hr>
+
+<h2>2. Solution Overview</h2>
+<p>A hosted two-sided web tool with two entry points:</p>
+<table>
+  <tr><th>Portal</th><th>Who Uses It</th><th>URL</th></tr>
+  <tr><td><strong>Ops Portal</strong></td><td>Wiom internal team</td><td>/ops</td></tr>
+  <tr><td><strong>Partner Portal</strong></td><td>Field partners (mobile + PC)</td><td>/partner</td></tr>
+</table>
+
+<h3>Technology Stack</h3>
+<ul>
+  <li><strong>Backend:</strong> Node.js + Express</li>
+  <li><strong>Frontend:</strong> Vanilla HTML/CSS/JS — no framework (fast on basic Android, works on PC)</li>
+  <li><strong>Barcode scanning:</strong> ZXing-js (browser camera, no app install needed)</li>
+  <li><strong>Auth:</strong> express-session with hardcoded credentials</li>
+  <li><strong>Data:</strong> CSV files loaded at startup into memory</li>
+  <li><strong>Hosting:</strong> Render.com free tier</li>
+</ul>
+
+<hr>
+
+<h2>3. Authentication</h2>
+<table>
+  <tr><th>Role</th><th>Username</th><th>Password / PIN</th></tr>
+  <tr><td>Ops Admin</td><td>admin</td><td>wiom@2026</td></tr>
+  <tr><td>Rajesh Telecom (Delhi)</td><td>partner_rajesh</td><td>1234</td></tr>
+  <tr><td>Sunita Networks (Mumbai)</td><td>partner_sunita</td><td>2345</td></tr>
+  <tr><td>KP Enterprises (Bangalore)</td><td>partner_kp</td><td>3456</td></tr>
+  <tr><td>Mehta Connect (Hyderabad)</td><td>partner_mehta</td><td>4567</td></tr>
+  <tr><td>Sharma Fibernet (Pune)</td><td>partner_sharma</td><td>5678</td></tr>
+</table>
+
+<hr>
+
+<h2>4. Data Model</h2>
+<h3>Input CSV Files</h3>
+<table>
+  <tr><th>File</th><th>Columns</th><th>Purpose</th></tr>
+  <tr><td>dispatch.csv</td><td>partner_id, device_id, mac_id, dispatch_date, batch_id</td><td>Every device dispatched to every partner</td></tr>
+  <tr><td>device_states.csv</td><td>device_id, current_state</td><td>Current lifecycle state of each device</td></tr>
+  <tr><td>pickup_tickets.csv</td><td>ticket_id, device_id, partner_id, status, created_at, closed_at</td><td>Customer pickup/return tickets</td></tr>
+  <tr><td>partners.csv</td><td>partner_id, partner_name, username, pin, operating_windows</td><td>Partner master data + credentials</td></tr>
+</table>
+
+<h3>Device States</h3>
+<table>
+  <tr><th>State</th><th>Meaning</th></tr>
+  <tr><td>at_wiom</td><td>Returned to warehouse</td></tr>
+  <tr><td>at_partner</td><td>With partner (expected)</td></tr>
+  <tr><td>at_customer</td><td>Deployed to end customer</td></tr>
+  <tr><td>unknown</td><td>Location unclear</td></tr>
+  <tr><td>at_partner_recovered_unlogged</td><td>Auto-corrected: found with partner, system hadn't recorded return</td></tr>
+</table>
+
+<h3>Expected Accountability Formula</h3>
+<div class="section-box">
+  <p><strong>Expected at partner =</strong></p>
+  <p>&nbsp;&nbsp;&nbsp;All devices dispatched to partner</p>
+  <p>&nbsp;&nbsp;&nbsp;<strong>MINUS</strong> devices returned to warehouse (state: at_wiom)</p>
+  <p>&nbsp;&nbsp;&nbsp;<strong>MINUS</strong> devices on active customer plans (state: at_customer + active ticket)</p>
+  <p>&nbsp;&nbsp;&nbsp;<strong>MINUS</strong> devices with completed pickup tickets (marked recovered)</p>
+</div>
+
+<h3>Audit Result Categories</h3>
+<table>
+  <tr><th>Category</th><th>Condition</th></tr>
+  <tr><td>✅ Verified</td><td>On expected list + scanned by partner</td></tr>
+  <tr><td>❌ Missing</td><td>On expected list + NOT scanned</td></tr>
+  <tr><td>⚠️ Unexpected</td><td>Scanned but NOT on expected list — lifecycle check runs automatically</td></tr>
+  <tr><td>🔄 State Corrected</td><td>Unexpected device with resolvable lifecycle — state auto-updated in system</td></tr>
+  <tr><td>🚨 Unauthorized</td><td>Scanned device dispatched to a different partner</td></tr>
+</table>
+
+<hr>
+
+<h2>5. Project File Structure</h2>
+<div class="code-block">
+/wiom-audit-tool
+  /backend
+    server.js           ← Express server, routes, session auth
+    reconcile.js        ← Expected inventory computation
+    csvLoader.js        ← Parse all CSVs into memory on startup
+    stateCorrector.js   ← Grey zone lifecycle resolution
+    mockDataGen.js      ← Generates mock CSVs (run once or at deploy)
+  /frontend
+    /ops
+      login.html        ← Ops login page
+      index.html        ← Dataset info + partner credentials
+      dashboard.html    ← Live audit status table + download reports
+      partner-detail.html  ← Device-level view per partner
+    /partner
+      login.html        ← Partner login (username + PIN keypad)
+      welcome.html      ← Instructions + expected device count
+      audit.html        ← Live scan/checklist interface
+      complete.html     ← Summary + submit
+    /css
+      ops.css           ← Clean desktop layout
+      partner.css       ← Mobile-first, large touch targets
+  /data
+    dispatch.csv
+    device_states.csv
+    pickup_tickets.csv
+    partners.csv
+  package.json
+  render.yaml           ← Render.com deployment config
+  progress.md           ← This project's task tracker
+</div>
+
+<hr>
+
+<h2>6. Demo Scenarios (Mock Data)</h2>
+<table>
+  <tr><th>Partner</th><th>Scenario</th><th>What to Observe</th></tr>
+  <tr>
+    <td>Rajesh Telecom</td>
+    <td>Clean case</td>
+    <td>All expected devices present. 100% verified on submit.</td>
+  </tr>
+  <tr>
+    <td>Sunita Networks</td>
+    <td>3 missing + 2 grey zone</td>
+    <td>Grey zone devices flagged with ⚠ tag in checklist. 3 devices show ❌ Missing in ops dashboard after submit.</td>
+  </tr>
+  <tr>
+    <td>KP Enterprises</td>
+    <td>1 unauthorized device</td>
+    <td>Scanning a device dispatched to Rajesh Telecom triggers 🚨 Unauthorized toast.</td>
+  </tr>
+  <tr>
+    <td>Mehta Connect</td>
+    <td>All categories mix</td>
+    <td>Shows verified, missing, unexpected, and state-corrected devices all in one audit.</td>
+  </tr>
+  <tr>
+    <td>Sharma Fibernet</td>
+    <td>Partial / in-progress</td>
+    <td>Scan some devices and do not submit to demo the "In Progress" badge on ops dashboard.</td>
+  </tr>
+</table>
+
+<hr>
+
+<h2>7. Demo Flow (Step by Step)</h2>
+
+<h3>Ops View</h3>
+<ol>
+  <li>Open <strong>/ops</strong> → login as <code>admin / wiom@2026</code></li>
+  <li>Home page shows demo dataset (5 partners, ~84 devices in accountability lists)</li>
+  <li>Note partner credentials table — copy usernames + PINs to share with partners</li>
+  <li>Click <strong>View Dashboard</strong> → see all partners at "Not Started"</li>
+</ol>
+
+<h3>Partner View</h3>
+<ol>
+  <li>Open <strong>/partner</strong> → login as <code>partner_sunita / 2345</code></li>
+  <li>Welcome screen shows "18 devices to account for"</li>
+  <li>Click <strong>Start Audit →</strong></li>
+  <li>Tap <strong>📷 Scan Barcode</strong> (or click "Enter Device ID manually")</li>
+  <li>Enter device IDs from the checklist — watch them tick green</li>
+  <li>Note ⚠ grey zone tags on expired-ticket devices</li>
+  <li>Try entering a device ID from a different partner → see 🚨 Unauthorized toast</li>
+  <li>Click <strong>Review &amp; Submit →</strong> then <strong>Submit Audit</strong></li>
+</ol>
+
+<h3>Back to Ops</h3>
+<ol>
+  <li>Return to <strong>/ops/dashboard</strong> — Sunita Networks now shows "Submitted" badge</li>
+  <li>Click the row → see device-level breakdown (verified / missing / unexpected)</li>
+  <li>Download <strong>Full Reconciliation CSV</strong>, <strong>State Corrections CSV</strong>, <strong>Missing Devices CSV</strong></li>
+</ol>
+
+<hr>
+
+<h2>8. Deployment</h2>
+
+<h3>Run Locally</h3>
+<div class="code-block">
+cd C:\Users\ajink\wiom-audit-tool
+
+# Note: ports 3000 and 3001 are occupied on this machine
+PORT=4000 node backend/server.js
+
+# Ops:     http://localhost:4000/ops
+# Partner: http://localhost:4000/partner
+</div>
+
+<h3>Deploy to Render.com</h3>
+<ol>
+  <li>Repo is already pushed: https://github.com/bulkentropy/wiom-audit-tool</li>
+  <li>Go to <strong>render.com</strong> → New + → Web Service → Connect <code>bulkentropy/wiom-audit-tool</code></li>
+  <li>Render auto-reads <code>render.yaml</code>:
+    <ul>
+      <li><strong>Build:</strong> <code>npm install &amp;&amp; node backend/mockDataGen.js</code></li>
+      <li><strong>Start:</strong> <code>node backend/server.js</code></li>
+    </ul>
+  </li>
+  <li>Click <strong>Deploy</strong> — takes ~2 minutes</li>
+  <li>Live URLs will be <code>https://wiom-audit.onrender.com/ops</code> and <code>/partner</code></li>
+</ol>
+
+<hr>
+
+<h2>9. Bugs Found and Fixed</h2>
+
+<h3>Bug 1 — Pages not loading (/ops and /partner redirecting wrongly)</h3>
+<p><strong>Symptom:</strong> Navigating to /ops showed the home page (index.html) instead of the login page.</p>
+<p><strong>Root cause:</strong> <code>express.static</code> middleware was registered before route handlers. When a request came in for <code>/ops</code>, Express static saw it as a directory (<code>frontend/ops/</code>) and redirected to <code>/ops/</code> which served <code>index.html</code> directly — bypassing the login route entirely.</p>
+<p><strong>Fix:</strong> Moved explicit GET route declarations before <code>express.static()</code>, and added <code>{ redirect: false }</code> to prevent directory redirects.</p>
+<p><strong>Commit:</strong> dd00f21</p>
+
+<h3>Bug 2 — "Could not load data" + continuous refresh loop on ops home</h3>
+<p><strong>Symptom:</strong> After login, the ops home page showed "Loading..." then "Could not load data." and kept refreshing in a loop.</p>
+<p><strong>Root cause:</strong> The auth check (<code>fetch('/api/ops/me')</code>) and data fetch (<code>fetch('/api/ops/summary')</code>) fired in parallel. If the session had expired (e.g. after a server restart clearing in-memory sessions), both requests got 401. The summary 401 caused "Could not load data.", the auth check triggered a redirect to /ops (login), the user logged in, went back to /ops/home — and the same race condition repeated.</p>
+<p><strong>Fix:</strong> Rewrote all ops page scripts to <code>await</code> the auth check before fetching any data. If auth fails, redirect happens cleanly with no error flicker. Applied to index.html, dashboard.html, and partner-detail.html.</p>
+<p><strong>Commit:</strong> ab0fe00</p>
+
+<hr>
+
+<h2>10. Known Limitations</h2>
+<table>
+  <tr><th>Item</th><th>Impact</th><th>Notes</th></tr>
+  <tr>
+    <td>In-memory sessions</td>
+    <td>Server restart clears all sessions</td>
+    <td>Acceptable for hackathon demo. Production would use Redis or DB-backed sessions.</td>
+  </tr>
+  <tr>
+    <td>Barcode scanning on iOS Safari (HTTP)</td>
+    <td>Camera blocked on HTTP</td>
+    <td>Works on Render deploy (HTTPS). Manual entry fallback always available.</td>
+  </tr>
+  <tr>
+    <td>CSV upload mode</td>
+    <td>UI exists but backend not wired</td>
+    <td>Demo mode (pre-loaded data) covers all judge-facing scenarios.</td>
+  </tr>
+  <tr>
+    <td>No persistent database</td>
+    <td>Audit state lost on restart</td>
+    <td>Fine for demo. Would need SQLite or Postgres for production.</td>
+  </tr>
+</table>
+
+<hr>
+
+<h2>11. API Reference</h2>
+<table>
+  <tr><th>Method</th><th>Endpoint</th><th>Auth</th><th>Description</th></tr>
+  <tr><td>POST</td><td>/api/ops/login</td><td>—</td><td>{ username, password }</td></tr>
+  <tr><td>GET</td><td>/api/ops/me</td><td>Ops</td><td>Check session validity</td></tr>
+  <tr><td>GET</td><td>/api/ops/summary</td><td>Ops</td><td>All partners + audit status</td></tr>
+  <tr><td>GET</td><td>/api/ops/partner/:id</td><td>Ops</td><td>Device-level detail for one partner</td></tr>
+  <tr><td>GET</td><td>/api/ops/report/full</td><td>Ops</td><td>Full reconciliation CSV download</td></tr>
+  <tr><td>GET</td><td>/api/ops/report/corrections</td><td>Ops</td><td>State corrections CSV download</td></tr>
+  <tr><td>GET</td><td>/api/ops/report/missing</td><td>Ops</td><td>Missing devices CSV download</td></tr>
+  <tr><td>POST</td><td>/api/partner/login</td><td>—</td><td>{ username, pin }</td></tr>
+  <tr><td>GET</td><td>/api/partner/me</td><td>Partner</td><td>Check session + get partner info</td></tr>
+  <tr><td>GET</td><td>/api/partner/expected</td><td>Partner</td><td>Expected device list for logged-in partner</td></tr>
+  <tr><td>POST</td><td>/api/partner/scan</td><td>Partner</td><td>{ device_id } — scan a device, returns category</td></tr>
+  <tr><td>GET</td><td>/api/partner/summary</td><td>Partner</td><td>Verified / missing / unexpected counts</td></tr>
+  <tr><td>POST</td><td>/api/partner/submit</td><td>Partner</td><td>Lock and submit the audit</td></tr>
+</table>
+
+<hr>
+
+<p style="color:#9ca3af; font-size:9pt; text-align:center;">
+  Generated 2026-03-18 &nbsp;|&nbsp; Prompt Wars 2 &nbsp;|&nbsp; Wiom Netbox Physical Verification Tool
+</p>
+
+</body>
+</html>
