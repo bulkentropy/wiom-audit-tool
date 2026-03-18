@@ -62,7 +62,7 @@
 </div>
 
 <script>
-fetch('/api/ops/me').then(r => { if (!r.ok) window.location.href = '/ops'; });
+fetch('/api/ops/me').then(r => { if (!r.ok) window.location.href = '/ops'; return r; }).then(r => r && loadData());
 
 document.getElementById('logout-btn').addEventListener('click', async (e) => {
   e.preventDefault();
@@ -116,9 +116,8 @@ async function loadData() {
   `).join('');
 }
 
-loadData();
-// Auto-refresh every 15 seconds
-setInterval(loadData, 15000);
+// loadData() is called after auth check above; auto-refresh only after first load succeeds
+setInterval(() => fetch('/api/ops/me').then(r => r.ok && loadData()), 15000);
 </script>
 </body>
 </html>

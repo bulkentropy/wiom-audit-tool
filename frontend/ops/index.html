@@ -69,9 +69,6 @@
 </div>
 
 <script>
-// Redirect if not logged in
-fetch('/api/ops/me').then(r => { if (!r.ok) window.location.href = '/ops'; });
-
 document.getElementById('partner-url').textContent = window.location.origin + '/partner';
 
 document.getElementById('logout-btn').addEventListener('click', async (e) => {
@@ -80,28 +77,33 @@ document.getElementById('logout-btn').addEventListener('click', async (e) => {
   window.location.href = '/ops';
 });
 
-// Load summary for credentials table
-fetch('/api/ops/summary')
-  .then(r => r.json())
-  .then(data => {
-    const total = data.reduce((s, p) => s + p.expected, 0);
-    document.getElementById('dataset-info').innerHTML =
-      `<strong>${data.length}</strong> partners &nbsp;|&nbsp; <strong>${total}</strong> devices in expected accountability lists &nbsp;|&nbsp; <strong>${new Date().toLocaleDateString()}</strong>`;
+// Auth check FIRST, then load data only if logged in
+(async () => {
+  const me = await fetch('/api/ops/me');
+  if (!me.ok) { window.location.href = '/ops'; return; }
 
-    const tbody = document.getElementById('cred-table-body');
-    tbody.innerHTML = data.map(p => `
-      <tr>
-        <td>${p.partner_name}</td>
-        <td>${p.city || '—'}</td>
-        <td><span class="cred-pill">${p.username}</span></td>
-        <td><span class="cred-pill">${p.pin}</span></td>
-        <td>${p.expected}</td>
-      </tr>
-    `).join('');
-  })
-  .catch(() => {
-    document.getElementById('dataset-info').textContent = 'Could not load data.';
-  });
+  const res  = await fetch('/api/ops/summary');
+  if (!res.ok) {
+    document.getElementById('dataset-info').textContent = 'Failed to load data (status ' + res.status + ')';
+    return;
+  }
+  const data = await res.json();
+
+  const total = data.reduce((s, p) => s + p.expected, 0);
+  document.getElementById('dataset-info').innerHTML =
+    `<strong>${data.length}</strong> partners &nbsp;|&nbsp; <strong>${total}</strong> devices in expected accountability lists &nbsp;|&nbsp; <strong>${new Date().toLocaleDateString()}</strong>`;
+
+  const tbody = document.getElementById('cred-table-body');
+  tbody.innerHTML = data.map(p => `
+    <tr>
+      <td>${p.partner_name}</td>
+      <td>${p.city || '—'}</td>
+      <td><span class="cred-pill">${p.username}</span></td>
+      <td><span class="cred-pill">${p.pin}</span></td>
+      <td>${p.expected}</td>
+    </tr>
+  `).join('');
+})();
 </script>
 </body>
 </html>

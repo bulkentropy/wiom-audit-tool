@@ -58,7 +58,7 @@
 </div>
 
 <script>
-fetch('/api/ops/me').then(r => { if (!r.ok) window.location.href = '/ops'; });
+fetch('/api/ops/me').then(r => { if (!r.ok) window.location.href = '/ops'; return r; }).then(r => r && load());
 
 document.getElementById('logout-btn').addEventListener('click', async (e) => {
   e.preventDefault();
@@ -151,8 +151,8 @@ async function load() {
   }
 }
 
-load();
-setInterval(load, 15000);
+// load() called after auth check above
+setInterval(() => fetch('/api/ops/me').then(r => r.ok && load()), 15000);
 </script>
 </body>
 </html>
