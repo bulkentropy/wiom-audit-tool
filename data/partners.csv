@@ -1,0 +1,6 @@
+partner_id,partner_name,city,username,pin,operating_windows
+"P001","Rajesh Telecom","Delhi","partner_rajesh","1234","Mon-Sat 9am-7pm"
+"P002","Sunita Networks","Mumbai","partner_sunita","2345","Mon-Sun 8am-9pm"
+"P003","KP Enterprises","Bangalore","partner_kp","3456","Mon-Fri 10am-6pm"
+"P004","Mehta Connect","Hyderabad","partner_mehta","4567","Mon-Sat 9am-8pm"
+"P005","Sharma Fibernet","Pune","partner_sharma","5678","Mon-Sun 9am-6pm"

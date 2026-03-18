@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wiom — Live Audit</title>
+  <link rel="stylesheet" href="/css/partner.css">
+  <!-- ZXing barcode library (CDN) -->
+  <script src="https://unpkg.com/@zxing/library@0.19.1/umd/index.min.js"></script>
+</head>
+<body>
+
+<!-- Sticky progress bar -->
+<div class="sticky-top">
+  <div class="progress-label" id="progress-label">Loading…</div>
+  <div class="progress-bar-wrap">
+    <div class="progress-bar-fill" id="progress-bar" style="width:0%"></div>
+  </div>
+</div>
+
+<!-- Camera area (hidden by default) -->
+<div id="camera-container">
+  <video id="camera-video" autoplay muted playsinline></video>
+  <div id="scan-overlay">
+    <div class="scan-frame"></div>
+    <div class="scan-line"></div>
+  </div>
+  <button class="close-cam" id="close-cam-btn" title="Close camera">✕</button>
+</div>
+
+<div class="page">
+  <!-- Scan section -->
+  <div class="scan-section">
+    <button class="scan-btn-big" id="scan-btn">
+      <span class="scan-icon">📷</span>
+      Scan Barcode
+    </button>
+    <span class="manual-link" id="manual-toggle">Enter Device ID manually</span>
+
+    <div id="manual-section" style="display:none;">
+      <div class="manual-input-row">
+        <input class="form-input" id="manual-input" placeholder="e.g. DEV01023" style="text-transform:uppercase;">
+        <button class="btn btn-primary btn-inline" id="manual-submit-btn">Submit</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Checklist -->
+  <div class="checklist-header">Expected Devices</div>
+  <ul class="checklist" id="checklist"></ul>
+</div>
+
+<!-- Sticky submit bar -->
+<div class="submit-bar" id="submit-bar" style="display:none;">
+  <a class="btn btn-success" href="/partner/complete" id="complete-btn">Review &amp; Submit →</a>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────────
+let expectedDevices = [];
+let scannedSet      = new Set();
+let codeReader      = null;
+let scanActive      = false;
+
+// ── Auth check ─────────────────────────────────────────────────────────────────
+fetch('/api/partner/me')
+  .then(r => { if (!r.ok) window.location.href = '/partner'; return r.json(); })
+  .then(me => {
+    if (me.submitted) { window.location.href = '/partner/complete'; return; }
+    loadExpected();
+  });
+
+// ── Load expected list ─────────────────────────────────────────────────────────
+async function loadExpected() {
+  const res  = await fetch('/api/partner/expected');
+  expectedDevices = await res.json();
+
+  // Restore already-scanned devices from server state
+  scannedSet = new Set(expectedDevices.filter(d => d.scanned).map(d => d.device_id));
+
+  renderChecklist();
+  updateProgress();
+}
+
+// ── Render ─────────────────────────────────────────────────────────────────────
+function renderChecklist() {
+  const list = document.getElementById('checklist');
+  list.innerHTML = expectedDevices.map(dev => `
+    <li class="checklist-item ${scannedSet.has(dev.device_id) ? 'verified' : ''} ${dev.grey_zone ? 'grey-zone' : ''}" id="item-${dev.device_id}">
+      <span class="check-icon">${scannedSet.has(dev.device_id) ? '✅' : '⬜'}</span>
+      <div class="device-info">
+        <div class="device-id">${dev.device_id}</div>
+        <div class="device-mac">${dev.mac_id}</div>
+        ${dev.grey_zone ? '<span class="grey-tag">⚠ Grey zone</span>' : ''}
+      </div>
+    </li>
+  `).join('');
+}
+
+function updateProgress() {
+  const total     = expectedDevices.length;
+  const verified  = expectedDevices.filter(d => scannedSet.has(d.device_id)).length;
+  const remaining = total - verified;
+  const pct       = total > 0 ? Math.round((verified / total) * 100) : 0;
+
+  document.getElementById('progress-label').textContent =
+    `${remaining} remaining of ${total} (${verified} verified)`;
+  document.getElementById('progress-bar').style.width = `${pct}%`;
+
+  // Show submit bar once at least 1 scanned
+  document.getElementById('submit-bar').style.display = scannedSet.size > 0 ? 'block' : 'none';
+}
+
+// ── Scan processing ────────────────────────────────────────────────────────────
+async function processScan(deviceId) {
+  deviceId = deviceId.trim().toUpperCase();
+  if (!deviceId) return;
+
+  const res  = await fetch('/api/partner/scan', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ device_id: deviceId }),
+  });
+  const data = await res.json();
+
+  if (data.status === 'already_scanned') {
+    showToast('Already scanned: ' + deviceId, 'warning');
+    return;
+  }
+
+  if (data.status === 'verified') {
+    scannedSet.add(deviceId);
+    const item = document.getElementById(`item-${deviceId}`);
+    if (item) {
+      item.classList.add('verified', 'flash');
+      item.querySelector('.check-icon').textContent = '✅';
+    }
+    showToast('✅ ' + deviceId + ' verified!', 'success');
+    updateProgress();
+  } else if (data.status === 'unexpected') {
+    if (data.category === 'STATE_CORRECTED') {
+      showToast(`🔄 ${deviceId} — ${data.description}`, 'success');
+    } else {
+      showToast(`${data.label}: ${deviceId}`, 'warning');
+    }
+    updateProgress();
+  } else if (data.error) {
+    showToast('Error: ' + data.error, 'error');
+  }
+}
+
+// ── Camera / ZXing ─────────────────────────────────────────────────────────────
+document.getElementById('scan-btn').addEventListener('click', startCamera);
+document.getElementById('close-cam-btn').addEventListener('click', stopCamera);
+
+async function startCamera() {
+  if (scanActive) return;
+
+  const container = document.getElementById('camera-container');
+  container.classList.add('active');
+  container.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+  try {
+    if (typeof ZXing === 'undefined') {
+      throw new Error('Barcode library not loaded. Please enter device ID manually.');
+    }
+    codeReader = new ZXing.BrowserMultiFormatReader();
+    scanActive = true;
+
+    // Get list of video devices
+    const devices = await codeReader.listVideoInputDevices();
+    // Prefer back camera on mobile
+    let deviceId = undefined;
+    const back = devices.find(d => /back|rear|environment/i.test(d.label));
+    if (back) deviceId = back.deviceId;
+    else if (devices.length > 0) deviceId = devices[devices.length - 1].deviceId;
+
+    codeReader.decodeFromVideoDevice(deviceId, 'camera-video', (result, err) => {
+      if (result) {
+        const text = result.getText();
+        stopCamera();
+        processScan(text);
+      }
+      // err is expected when no barcode in frame — ignore
+    });
+  } catch (err) {
+    stopCamera();
+    showToast(err.message || 'Camera error — use manual entry', 'warning');
+  }
+}
+
+function stopCamera() {
+  scanActive = false;
+  if (codeReader) {
+    try { codeReader.reset(); } catch (e) {}
+    codeReader = null;
+  }
+  document.getElementById('camera-container').classList.remove('active');
+}
+
+// ── Manual entry ───────────────────────────────────────────────────────────────
+document.getElementById('manual-toggle').addEventListener('click', () => {
+  const sec = document.getElementById('manual-section');
+  sec.style.display = sec.style.display === 'none' ? 'block' : 'none';
+  if (sec.style.display === 'block') document.getElementById('manual-input').focus();
+});
+
+document.getElementById('manual-submit-btn').addEventListener('click', () => {
+  const val = document.getElementById('manual-input').value.trim();
+  if (val) {
+    processScan(val);
+    document.getElementById('manual-input').value = '';
+  }
+});
+
+document.getElementById('manual-input').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') document.getElementById('manual-submit-btn').click();
+});
+
+// ── Toast ──────────────────────────────────────────────────────────────────────
+let toastTimer = null;
+function showToast(msg, type = '') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show' + (type ? ' ' + type : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.className = 'toast'; }, 3000);
+}
+</script>
+</body>
+</html>

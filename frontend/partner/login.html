@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wiom — Partner Login</title>
+  <link rel="stylesheet" href="/css/partner.css">
+</head>
+<body>
+<div class="login-wrap">
+  <div class="login-card">
+    <div class="login-logo">📡 Wiom</div>
+    <div class="login-sub">Device Audit Portal — Partner Login</div>
+
+    <div id="error" class="alert alert-error" style="display:none;"></div>
+
+    <div class="form-group">
+      <label class="form-label" for="username">Username</label>
+      <input class="form-input" id="username" type="text" autocomplete="username"
+             placeholder="e.g. partner_rajesh" inputmode="text">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">PIN</label>
+      <!-- Show numeric keypad on mobile, plain input on desktop -->
+      <div id="pin-display" class="pin-display" aria-live="polite">————</div>
+
+      <div class="keypad" id="keypad" role="group" aria-label="PIN keypad">
+        <button class="key-btn" data-digit="1">1</button>
+        <button class="key-btn" data-digit="2">2</button>
+        <button class="key-btn" data-digit="3">3</button>
+        <button class="key-btn" data-digit="4">4</button>
+        <button class="key-btn" data-digit="5">5</button>
+        <button class="key-btn" data-digit="6">6</button>
+        <button class="key-btn" data-digit="7">7</button>
+        <button class="key-btn" data-digit="8">8</button>
+        <button class="key-btn" data-digit="9">9</button>
+        <button class="key-btn danger" id="clear-btn">⌫</button>
+        <button class="key-btn zero"   data-digit="0">0</button>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" id="login-btn" disabled>Login</button>
+  </div>
+</div>
+
+<script>
+let pin = '';
+
+function updateDisplay() {
+  const disp = document.getElementById('pin-display');
+  const filled = '●'.repeat(pin.length);
+  const empty  = '—'.repeat(Math.max(0, 4 - pin.length));
+  disp.textContent = filled + empty;
+  document.getElementById('login-btn').disabled = pin.length < 4 || !document.getElementById('username').value.trim();
+}
+
+document.querySelectorAll('[data-digit]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (pin.length < 4) { pin += btn.dataset.digit; updateDisplay(); }
+  });
+});
+
+document.getElementById('clear-btn').addEventListener('click', () => {
+  pin = pin.slice(0, -1);
+  updateDisplay();
+});
+
+document.getElementById('username').addEventListener('input', updateDisplay);
+
+// Also allow keyboard entry for accessibility / PC
+document.addEventListener('keydown', (e) => {
+  if (document.activeElement === document.getElementById('username')) return;
+  if (e.key >= '0' && e.key <= '9' && pin.length < 4) {
+    pin += e.key;
+    updateDisplay();
+  }
+  if (e.key === 'Backspace') {
+    pin = pin.slice(0, -1);
+    updateDisplay();
+  }
+});
+
+document.getElementById('login-btn').addEventListener('click', async () => {
+  const btn = document.getElementById('login-btn');
+  btn.disabled = true;
+  btn.textContent = 'Logging in…';
+  document.getElementById('error').style.display = 'none';
+
+  const res = await fetch('/api/partner/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      username: document.getElementById('username').value.trim(),
+      pin,
+    }),
+  });
+
+  if (res.ok) {
+    window.location.href = '/partner/welcome';
+  } else {
+    const data = await res.json();
+    const err = document.getElementById('error');
+    err.textContent = data.error || 'Invalid credentials';
+    err.style.display = 'block';
+    pin = '';
+    updateDisplay();
+    btn.disabled = false;
+    btn.textContent = 'Login';
+  }
+});
+</script>
+</body>
+</html>

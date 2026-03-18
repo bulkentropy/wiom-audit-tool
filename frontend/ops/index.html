@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wiom — Ops Home</title>
+  <link rel="stylesheet" href="/css/ops.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-brand">📡 Wiom <span>Ops Portal</span></div>
+  <div class="nav-actions">
+    <a class="nav-link" href="/ops/dashboard">Dashboard</a>
+    <a class="nav-link" href="#" id="logout-btn">Logout</a>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="page-title">Data &amp; Setup</div>
+  <div class="page-subtitle">Manage audit data and partner credentials</div>
+
+  <div class="demo-badge">
+    ✅ Demo mode active — 5 partners, ~100 devices pre-loaded
+  </div>
+
+  <!-- Dataset info -->
+  <div class="card">
+    <div class="card-title">📦 Dataset</div>
+    <div id="dataset-info" style="color:#6b7280; font-size:.9rem;">Loading…</div>
+  </div>
+
+  <!-- Partner credentials -->
+  <div class="card">
+    <div class="card-title">🔑 Partner Credentials</div>
+    <p style="font-size:.875rem; color:#6b7280; margin-bottom:16px;">
+      Share these credentials with partners so they can log in to the partner portal.
+    </p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Partner Name</th>
+            <th>City</th>
+            <th>Username</th>
+            <th>PIN</th>
+            <th>Expected Devices</th>
+          </tr>
+        </thead>
+        <tbody id="cred-table-body">
+          <tr><td colspan="5" style="text-align:center; color:#9ca3af;">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div style="margin-top:16px;">
+      <a class="btn btn-primary btn-sm" href="/ops/dashboard">View Dashboard →</a>
+    </div>
+  </div>
+
+  <!-- Partner portal link -->
+  <div class="card" style="background:#eff6ff; border-color:#bfdbfe;">
+    <div class="card-title" style="color:#1e429f;">🔗 Partner Portal URL</div>
+    <p style="font-size:.9rem; margin-bottom:12px;">Share this URL with partners:</p>
+    <div style="font-family:monospace; background:#fff; border:1px solid #bfdbfe; border-radius:6px; padding:10px 14px; font-size:.9rem;">
+      <span id="partner-url"></span>
+    </div>
+  </div>
+</div>
+
+<script>
+// Redirect if not logged in
+fetch('/api/ops/me').then(r => { if (!r.ok) window.location.href = '/ops'; });
+
+document.getElementById('partner-url').textContent = window.location.origin + '/partner';
+
+document.getElementById('logout-btn').addEventListener('click', async (e) => {
+  e.preventDefault();
+  await fetch('/api/ops/logout', { method: 'POST' });
+  window.location.href = '/ops';
+});
+
+// Load summary for credentials table
+fetch('/api/ops/summary')
+  .then(r => r.json())
+  .then(data => {
+    const total = data.reduce((s, p) => s + p.expected, 0);
+    document.getElementById('dataset-info').innerHTML =
+      `<strong>${data.length}</strong> partners &nbsp;|&nbsp; <strong>${total}</strong> devices in expected accountability lists &nbsp;|&nbsp; <strong>${new Date().toLocaleDateString()}</strong>`;
+
+    const tbody = document.getElementById('cred-table-body');
+    tbody.innerHTML = data.map(p => `
+      <tr>
+        <td>${p.partner_name}</td>
+        <td>${p.city || '—'}</td>
+        <td><span class="cred-pill">${p.username}</span></td>
+        <td><span class="cred-pill">${p.pin}</span></td>
+        <td>${p.expected}</td>
+      </tr>
+    `).join('');
+  })
+  .catch(() => {
+    document.getElementById('dataset-info').textContent = 'Could not load data.';
+  });
+</script>
+</body>
+</html>

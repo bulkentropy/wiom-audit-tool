@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wiom — Dashboard</title>
+  <link rel="stylesheet" href="/css/ops.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-brand">📡 Wiom <span>Ops Portal</span></div>
+  <div class="nav-actions">
+    <a class="nav-link" href="/ops/home">Setup</a>
+    <a class="nav-link" href="#" id="logout-btn">Logout</a>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="page-title">Reconciliation Dashboard</div>
+  <div class="page-subtitle">Live audit status across all partners</div>
+
+  <!-- Aggregate stats -->
+  <div class="stats-row" id="stats-row">
+    <div class="stat-card"><div class="stat-value stat-blue" id="st-total">—</div><div class="stat-label">Total Devices</div></div>
+    <div class="stat-card"><div class="stat-value stat-green" id="st-verified">—</div><div class="stat-label">Verified</div></div>
+    <div class="stat-card"><div class="stat-value stat-red" id="st-missing">—</div><div class="stat-label">Missing</div></div>
+    <div class="stat-card"><div class="stat-value stat-yellow" id="st-unexpected">—</div><div class="stat-label">Unexpected</div></div>
+    <div class="stat-card"><div class="stat-value stat-green" id="st-submitted">—</div><div class="stat-label">Audits Submitted</div></div>
+  </div>
+
+  <!-- Download buttons -->
+  <div class="download-bar" style="margin-bottom:20px;">
+    <a class="btn btn-outline btn-sm" href="/api/ops/report/full">⬇ Full Reconciliation CSV</a>
+    <a class="btn btn-outline btn-sm" href="/api/ops/report/corrections">⬇ State Corrections CSV</a>
+    <a class="btn btn-outline btn-sm" href="/api/ops/report/missing">⬇ Missing Devices CSV</a>
+  </div>
+
+  <!-- Partner table -->
+  <div class="card">
+    <div class="card-title">Partner Audit Status</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Partner</th>
+            <th>City</th>
+            <th>Expected</th>
+            <th>Status</th>
+            <th>✅ Verified</th>
+            <th>❌ Missing</th>
+            <th>⚠️ Unexpected</th>
+            <th>Submitted At</th>
+          </tr>
+        </thead>
+        <tbody id="partner-table-body">
+          <tr><td colspan="8" style="text-align:center;color:#9ca3af;">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+fetch('/api/ops/me').then(r => { if (!r.ok) window.location.href = '/ops'; });
+
+document.getElementById('logout-btn').addEventListener('click', async (e) => {
+  e.preventDefault();
+  await fetch('/api/ops/logout', { method: 'POST' });
+  window.location.href = '/ops';
+});
+
+function statusBadge(status) {
+  if (status === 'submitted')  return '<span class="badge badge-green">Submitted</span>';
+  if (status === 'in_progress') return '<span class="badge badge-yellow">In Progress</span>';
+  return '<span class="badge badge-grey">Not Started</span>';
+}
+
+function fmt(dt) {
+  if (!dt) return '—';
+  return new Date(dt).toLocaleString();
+}
+
+async function loadData() {
+  const res  = await fetch('/api/ops/summary');
+  const data = await res.json();
+
+  // Aggregates
+  let total = 0, verified = 0, missing = 0, unexpected = 0, submitted = 0;
+  for (const p of data) {
+    total     += p.expected;
+    verified  += p.verified;
+    missing   += p.missing;
+    unexpected += p.unexpected;
+    if (p.status === 'submitted') submitted++;
+  }
+  document.getElementById('st-total').textContent     = total;
+  document.getElementById('st-verified').textContent  = verified;
+  document.getElementById('st-missing').textContent   = missing;
+  document.getElementById('st-unexpected').textContent = unexpected;
+  document.getElementById('st-submitted').textContent = `${submitted}/${data.length}`;
+
+  // Table
+  const tbody = document.getElementById('partner-table-body');
+  tbody.innerHTML = data.map(p => `
+    <tr class="clickable-row" onclick="window.location.href='/ops/partner-detail?id=${p.partner_id}'">
+      <td><strong>${p.partner_name}</strong></td>
+      <td>${p.city || '—'}</td>
+      <td>${p.expected}</td>
+      <td>${statusBadge(p.status)}</td>
+      <td style="color:#057a55; font-weight:600;">${p.verified}</td>
+      <td style="color:#c81e1e; font-weight:600;">${p.missing}</td>
+      <td style="color:#c27803; font-weight:600;">${p.unexpected}</td>
+      <td style="font-size:.8rem; color:#6b7280;">${fmt(p.submitted_at)}</td>
+    </tr>
+  `).join('');
+}
+
+loadData();
+// Auto-refresh every 15 seconds
+setInterval(loadData, 15000);
+</script>
+</body>
+</html>

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wiom — Partner Detail</title>
+  <link rel="stylesheet" href="/css/ops.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-brand">📡 Wiom <span>Ops Portal</span></div>
+  <div class="nav-actions">
+    <a class="nav-link" href="/ops/home">Setup</a>
+    <a class="nav-link" href="/ops/dashboard">Dashboard</a>
+    <a class="nav-link" href="#" id="logout-btn">Logout</a>
+  </div>
+</nav>
+
+<div class="container">
+  <a class="back-link" href="/ops/dashboard">← Back to Dashboard</a>
+
+  <div id="header-section">
+    <div class="page-title" id="partner-title">Loading…</div>
+    <div class="page-subtitle" id="partner-sub"></div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row" id="detail-stats" style="grid-template-columns: repeat(5, 1fr); margin-top:12px;"></div>
+
+  <div class="detail-grid">
+    <!-- Expected device list -->
+    <div>
+      <div class="card">
+        <div class="card-title">Expected Devices</div>
+        <ul class="device-list" id="expected-list">
+          <li>Loading…</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Unexpected + state corrections -->
+    <div>
+      <div class="card">
+        <div class="card-title">Unexpected Scans</div>
+        <ul class="device-list" id="unexpected-list">
+          <li style="color:#9ca3af; font-size:.875rem;">None so far</li>
+        </ul>
+      </div>
+      <div class="card" style="margin-top:0;">
+        <div class="card-title">🔄 State Corrections</div>
+        <ul class="device-list" id="corrections-list">
+          <li style="color:#9ca3af; font-size:.875rem;">None</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+fetch('/api/ops/me').then(r => { if (!r.ok) window.location.href = '/ops'; });
+
+document.getElementById('logout-btn').addEventListener('click', async (e) => {
+  e.preventDefault();
+  await fetch('/api/ops/logout', { method: 'POST' });
+  window.location.href = '/ops';
+});
+
+const params    = new URLSearchParams(location.search);
+const partnerId = params.get('id');
+if (!partnerId) { alert('No partner ID'); location.href = '/ops/dashboard'; }
+
+function statusBadge(status) {
+  if (status === 'submitted')  return '<span class="badge badge-green">Submitted</span>';
+  if (status === 'in_progress') return '<span class="badge badge-yellow">In Progress</span>';
+  return '<span class="badge badge-grey">Not Started</span>';
+}
+
+async function load() {
+  const res  = await fetch(`/api/ops/partner/${partnerId}`);
+  if (!res.ok) { alert('Partner not found'); location.href = '/ops/dashboard'; return; }
+  const d = await res.json();
+
+  document.title = `Wiom — ${d.partner.partner_name}`;
+  document.getElementById('partner-title').textContent = d.partner.partner_name;
+  document.getElementById('partner-sub').innerHTML = `
+    ${d.partner.city || ''} &nbsp;|&nbsp; Username: <code>${d.partner.username}</code> &nbsp;|&nbsp; PIN: <code>${d.partner.pin}</code>
+    &nbsp;|&nbsp; ${statusBadge(d.status)}
+    ${d.submitted_at ? `&nbsp;|&nbsp; Submitted: ${new Date(d.submitted_at).toLocaleString()}` : ''}
+  `;
+
+  // Stats
+  const verified  = d.devices.filter(x => x.status === 'verified').length;
+  const missing   = d.devices.filter(x => x.status === 'missing').length;
+  const corrections = d.state_corrections.length;
+
+  document.getElementById('detail-stats').innerHTML = `
+    <div class="stat-card"><div class="stat-value stat-blue">${d.expected}</div><div class="stat-label">Expected</div></div>
+    <div class="stat-card"><div class="stat-value stat-green">${verified}</div><div class="stat-label">✅ Verified</div></div>
+    <div class="stat-card"><div class="stat-value stat-red">${missing}</div><div class="stat-label">❌ Missing</div></div>
+    <div class="stat-card"><div class="stat-value stat-yellow">${d.unexpected.length}</div><div class="stat-label">⚠️ Unexpected</div></div>
+    <div class="stat-card"><div class="stat-value" style="color:#7c3aed;">${corrections}</div><div class="stat-label">🔄 Corrected</div></div>
+  `;
+
+  // Expected device list
+  const el = document.getElementById('expected-list');
+  el.innerHTML = d.devices.map(dev => `
+    <li>
+      <span class="${dev.status === 'verified' ? 'icon-verified' : 'icon-missing'}">
+        ${dev.status === 'verified' ? '✅' : '❌'}
+      </span>
+      <div>
+        <div style="font-weight:600; font-size:.85rem;">${dev.device_id}</div>
+        <div style="font-size:.75rem; color:#6b7280;">${dev.mac_id} &nbsp;·&nbsp; ${dev.batch_id}${dev.grey_zone ? ' &nbsp;<span style="background:#fef3c7;color:#92400e;font-size:.7rem;border-radius:4px;padding:1px 5px;">grey zone</span>' : ''}</div>
+      </div>
+    </li>
+  `).join('');
+
+  // Unexpected list
+  const ul = document.getElementById('unexpected-list');
+  if (d.unexpected.length === 0) {
+    ul.innerHTML = '<li style="color:#9ca3af; font-size:.875rem;">None</li>';
+  } else {
+    ul.innerHTML = d.unexpected.map(dev => `
+      <li>
+        <span class="icon-unexpected">${dev.label ? dev.label.split(' ')[0] : '⚠️'}</span>
+        <div>
+          <div style="font-weight:600; font-size:.85rem;">${dev.device_id}</div>
+          <div style="font-size:.75rem; color:#6b7280;">${dev.label || ''} — ${dev.description || ''}</div>
+        </div>
+      </li>
+    `).join('');
+  }
+
+  // State corrections
+  const cl = document.getElementById('corrections-list');
+  if (d.state_corrections.length === 0) {
+    cl.innerHTML = '<li style="color:#9ca3af; font-size:.875rem;">None</li>';
+  } else {
+    cl.innerHTML = d.state_corrections.map(c => `
+      <li>
+        <span>🔄</span>
+        <div>
+          <div style="font-weight:600; font-size:.85rem;">${c.device_id}</div>
+          <div style="font-size:.75rem; color:#6b7280;">
+            ${c.old_state} → ${c.new_state}<br>${c.reason}
+          </div>
+        </div>
+      </li>
+    `).join('');
+  }
+}
+
+load();
+setInterval(load, 15000);
+</script>
+</body>
+</html>

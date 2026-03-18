@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wiom — Welcome</title>
+  <link rel="stylesheet" href="/css/partner.css">
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header-brand">📡 Wiom Device Audit</div>
+    <div class="header-sub" id="partner-name-sub">Loading…</div>
+  </div>
+  <a href="#" id="logout-btn" style="color:#fff; font-size:.8rem; opacity:.8;">Logout</a>
+</div>
+
+<div class="page">
+  <div class="welcome-hero">
+    <div class="welcome-name" id="welcome-name">Welcome</div>
+    <div class="welcome-count" id="device-count">—</div>
+    <div class="welcome-count-label">devices to account for</div>
+  </div>
+
+  <div class="step-cards">
+    <div class="step-card">
+      <div class="step-icon">📦</div>
+      <div>
+        <div class="step-title">Collect</div>
+        <div class="step-desc">Gather all devices — new stock and those recovered from customers.</div>
+      </div>
+    </div>
+    <div class="step-card">
+      <div class="step-icon">🔄</div>
+      <div>
+        <div class="step-title">Arrange</div>
+        <div class="step-desc">Place them face-down so the barcode label on each device is visible.</div>
+      </div>
+    </div>
+    <div class="step-card">
+      <div class="step-icon">📱</div>
+      <div>
+        <div class="step-title">Scan</div>
+        <div class="step-desc">Use your camera to scan each device's barcode, or enter the ID manually.</div>
+      </div>
+    </div>
+    <div class="step-card">
+      <div class="step-icon">✅</div>
+      <div>
+        <div class="step-title">Submit</div>
+        <div class="step-desc">When your list is complete, submit your audit to Wiom ops.</div>
+      </div>
+    </div>
+  </div>
+
+  <a class="btn btn-primary" href="/partner/audit" id="start-btn">Start Audit →</a>
+</div>
+
+<script>
+fetch('/api/partner/me')
+  .then(r => { if (!r.ok) { window.location.href = '/partner'; return null; } return r.json(); })
+  .then(data => {
+    if (!data) return;
+    document.getElementById('welcome-name').textContent = `Welcome, ${data.partner_name}`;
+    document.getElementById('partner-name-sub').textContent = data.partner_name;
+    document.getElementById('device-count').textContent = data.expected_count;
+    document.title = `Wiom — ${data.partner_name}`;
+
+    if (data.submitted) {
+      document.getElementById('start-btn').textContent = 'View Audit Results →';
+      document.getElementById('start-btn').href = '/partner/complete';
+    } else if (data.scanned_count > 0) {
+      document.getElementById('start-btn').textContent = `Continue Audit (${data.scanned_count} scanned) →`;
+    }
+  });
+
+document.getElementById('logout-btn').addEventListener('click', async (e) => {
+  e.preventDefault();
+  await fetch('/api/partner/logout', { method: 'POST' });
+  window.location.href = '/partner';
+});
+</script>
+</body>
+</html>

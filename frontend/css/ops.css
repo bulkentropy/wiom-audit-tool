@@ -1,0 +1,194 @@
+/* ops.css — Clean desktop layout for Wiom Ops Portal */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --primary:   #1a56db;
+  --primary-h: #1e429f;
+  --success:   #057a55;
+  --warning:   #c27803;
+  --danger:    #c81e1e;
+  --bg:        #f3f4f6;
+  --surface:   #ffffff;
+  --border:    #e5e7eb;
+  --text:      #111827;
+  --muted:     #6b7280;
+  --radius:    8px;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+/* ── Nav ── */
+.nav {
+  background: var(--primary);
+  color: #fff;
+  padding: 0 24px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 1px 4px rgba(0,0,0,.2);
+}
+.nav-brand { font-weight: 700; font-size: 1.1rem; letter-spacing: .02em; }
+.nav-brand span { opacity: .7; font-weight: 400; margin-left: 6px; font-size: .9rem; }
+.nav-actions { display: flex; gap: 12px; align-items: center; }
+.nav-link { color: #fff; text-decoration: none; opacity: .85; font-size: .9rem; }
+.nav-link:hover { opacity: 1; }
+
+/* ── Container ── */
+.container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+.page-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 4px; }
+.page-subtitle { color: var(--muted); font-size: .9rem; margin-bottom: 24px; }
+
+/* ── Card ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin-bottom: 20px;
+}
+.card-title { font-size: 1rem; font-weight: 600; margin-bottom: 16px; color: var(--text); }
+
+/* ── Login card ── */
+.login-wrap {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #1e429f 0%, #1a56db 100%);
+}
+.login-card {
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 40px;
+  width: 360px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.18);
+}
+.login-logo { font-size: 1.4rem; font-weight: 800; color: var(--primary); margin-bottom: 6px; }
+.login-sub { color: var(--muted); font-size: .875rem; margin-bottom: 28px; }
+
+/* ── Form ── */
+.form-group { margin-bottom: 16px; }
+.form-label { display: block; font-size: .875rem; font-weight: 500; margin-bottom: 6px; }
+.form-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: .95rem;
+  transition: border-color .15s;
+}
+.form-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(26,86,219,.15); }
+
+/* ── Buttons ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 18px;
+  border: none;
+  border-radius: var(--radius);
+  font-size: .9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background .15s, transform .1s;
+  text-decoration: none;
+}
+.btn:active { transform: scale(.98); }
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-primary:hover { background: var(--primary-h); }
+.btn-success { background: var(--success); color: #fff; }
+.btn-outline { background: transparent; color: var(--primary); border: 1px solid var(--primary); }
+.btn-outline:hover { background: #eff6ff; }
+.btn-sm { padding: 6px 12px; font-size: .8rem; }
+.btn-full { width: 100%; justify-content: center; }
+
+/* ── Alert ── */
+.alert { padding: 12px 16px; border-radius: var(--radius); font-size: .875rem; margin-bottom: 16px; }
+.alert-error   { background: #fef2f2; color: var(--danger); border: 1px solid #fecaca; }
+.alert-success { background: #f0fdf4; color: var(--success); border: 1px solid #bbf7d0; }
+.alert-info    { background: #eff6ff; color: var(--primary); border: 1px solid #bfdbfe; }
+
+/* ── Table ── */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; padding: 12px 14px; font-size: .75rem; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); border-bottom: 2px solid var(--border); background: var(--bg); }
+td { padding: 13px 14px; border-bottom: 1px solid var(--border); font-size: .9rem; }
+tr:hover td { background: #f9fafb; }
+tr:last-child td { border-bottom: none; }
+.clickable-row { cursor: pointer; }
+
+/* ── Badges ── */
+.badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: .75rem;
+  font-weight: 600;
+}
+.badge-grey    { background: #f3f4f6; color: #374151; }
+.badge-yellow  { background: #fef3c7; color: #92400e; }
+.badge-green   { background: #d1fae5; color: #065f46; }
+
+/* ── Stats row ── */
+.stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; text-align: center; }
+.stat-value { font-size: 2rem; font-weight: 700; }
+.stat-label { font-size: .8rem; color: var(--muted); margin-top: 4px; }
+.stat-green  { color: var(--success); }
+.stat-red    { color: var(--danger); }
+.stat-yellow { color: var(--warning); }
+.stat-blue   { color: var(--primary); }
+
+/* ── Demo notice ── */
+.demo-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-size: .85rem;
+  font-weight: 500;
+  margin-bottom: 20px;
+}
+
+/* ── Credential table ── */
+.cred-pill {
+  font-family: monospace;
+  background: #f3f4f6;
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: .85rem;
+}
+
+/* ── Download bar ── */
+.download-bar { display: flex; gap: 10px; flex-wrap: wrap; }
+
+/* ── Device detail ── */
+.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media (max-width: 720px) { .detail-grid { grid-template-columns: 1fr; } }
+
+.device-list { list-style: none; }
+.device-list li { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: .875rem; }
+.device-list li:last-child { border-bottom: none; }
+
+.icon-verified   { color: var(--success); }
+.icon-missing    { color: var(--danger); }
+.icon-unexpected { color: var(--warning); }
+
+/* ── Spinner ── */
+.spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid #d1d5db; border-top-color: var(--primary); border-radius: 50%; animation: spin .6s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Back link ── */
+.back-link { display: inline-flex; align-items: center; gap: 4px; color: var(--primary); text-decoration: none; font-size: .875rem; margin-bottom: 16px; }
+.back-link:hover { text-decoration: underline; }

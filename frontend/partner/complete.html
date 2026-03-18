@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wiom — Audit Complete</title>
+  <link rel="stylesheet" href="/css/partner.css">
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header-brand">📡 Wiom Device Audit</div>
+    <div class="header-sub" id="partner-name-sub"></div>
+  </div>
+  <a href="/partner/audit" style="color:#fff; font-size:.8rem; opacity:.8;" id="back-btn">← Back</a>
+</div>
+
+<div class="page">
+  <div class="complete-hero">
+    <div class="complete-icon" id="hero-icon">⏳</div>
+    <div class="complete-title" id="hero-title">Loading…</div>
+    <div class="complete-sub" id="hero-sub"></div>
+  </div>
+
+  <div class="summary-card">
+    <div class="summary-row">
+      <div class="summary-label">✅ Verified</div>
+      <div class="summary-count count-green" id="count-verified">—</div>
+    </div>
+    <div class="summary-row">
+      <div class="summary-label">❌ Not found</div>
+      <div class="summary-count count-red" id="count-missing">—</div>
+    </div>
+    <div class="summary-row">
+      <div class="summary-label">⚠️ Extra devices logged</div>
+      <div class="summary-count count-yellow" id="count-unexpected">—</div>
+    </div>
+  </div>
+
+  <div id="submit-area">
+    <button class="btn btn-success" id="submit-btn">Submit Audit</button>
+    <p style="text-align:center; font-size:.8rem; color:#6b7280; margin-top:10px;">
+      Once submitted, Wiom ops will be notified and your audit will be locked.
+    </p>
+  </div>
+
+  <div id="submitted-area" style="display:none;">
+    <div class="submitted-notice">
+      ✅ Submitted. Wiom ops team has been notified.
+    </div>
+    <p style="text-align:center; font-size:.875rem; color:#6b7280; margin-top:16px;" id="submitted-time"></p>
+  </div>
+</div>
+
+<script>
+let partnerName = '';
+
+fetch('/api/partner/me')
+  .then(r => { if (!r.ok) { window.location.href = '/partner'; return null; } return r.json(); })
+  .then(me => {
+    if (!me) return;
+    partnerName = me.partner_name;
+    document.getElementById('partner-name-sub').textContent = me.partner_name;
+    loadSummary(me.submitted);
+  });
+
+async function loadSummary(alreadySubmitted) {
+  const res  = await fetch('/api/partner/summary');
+  const data = await res.json();
+
+  document.getElementById('count-verified').textContent  = data.verified;
+  document.getElementById('count-missing').textContent   = data.missing;
+  document.getElementById('count-unexpected').textContent = data.unexpected;
+
+  const submitted = alreadySubmitted || data.submitted;
+
+  if (data.missing === 0 && !submitted) {
+    document.getElementById('hero-icon').textContent  = '🎉';
+    document.getElementById('hero-title').textContent = 'All devices accounted for!';
+    document.getElementById('hero-sub').textContent   = 'Great work! Review and submit below.';
+  } else if (!submitted) {
+    document.getElementById('hero-icon').textContent  = '⚠️';
+    document.getElementById('hero-title').textContent = `Audit incomplete — ${data.missing} device${data.missing !== 1 ? 's' : ''} not found`;
+    document.getElementById('hero-sub').textContent   = 'You can still submit — Wiom will flag the missing devices.';
+  }
+
+  if (submitted) {
+    document.getElementById('hero-icon').textContent  = '✅';
+    document.getElementById('hero-title').textContent = 'Audit Submitted';
+    document.getElementById('hero-sub').textContent   = '';
+    document.getElementById('submit-area').style.display   = 'none';
+    document.getElementById('submitted-area').style.display = 'block';
+    document.getElementById('back-btn').style.display       = 'none';
+    if (data.submitted_at) {
+      document.getElementById('submitted-time').textContent =
+        'Submitted on ' + new Date(data.submitted_at).toLocaleString();
+    }
+  }
+}
+
+document.getElementById('submit-btn').addEventListener('click', async () => {
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'Submitting…';
+
+  const res  = await fetch('/api/partner/submit', { method: 'POST' });
+  const data = await res.json();
+
+  if (res.ok) {
+    document.getElementById('hero-icon').textContent  = '✅';
+    document.getElementById('hero-title').textContent = 'Audit Submitted';
+    document.getElementById('hero-sub').textContent   = '';
+    document.getElementById('submit-area').style.display   = 'none';
+    document.getElementById('submitted-area').style.display = 'block';
+    document.getElementById('back-btn').style.display       = 'none';
+    if (data.submitted_at) {
+      document.getElementById('submitted-time').textContent =
+        'Submitted on ' + new Date(data.submitted_at).toLocaleString();
+    }
+  } else {
+    btn.disabled = false;
+    btn.textContent = 'Submit Audit';
+    alert(data.error || 'Failed to submit');
+  }
+});
+</script>
+</body>
+</html>

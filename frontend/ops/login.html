@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wiom — Ops Login</title>
+  <link rel="stylesheet" href="/css/ops.css">
+</head>
+<body>
+<div class="login-wrap">
+  <div class="login-card">
+    <div class="login-logo">📡 Wiom</div>
+    <div class="login-sub">Netbox Audit Operations Portal</div>
+
+    <div id="error" class="alert alert-error" style="display:none;"></div>
+
+    <form id="login-form">
+      <div class="form-group">
+        <label class="form-label" for="username">Username</label>
+        <input class="form-input" id="username" type="text" autocomplete="username" placeholder="admin" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="password">Password</label>
+        <input class="form-input" id="password" type="password" autocomplete="current-password" placeholder="••••••••" required>
+      </div>
+      <button class="btn btn-primary btn-full" type="submit" id="login-btn">Login</button>
+    </form>
+  </div>
+</div>
+
+<script>
+document.getElementById('login-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('login-btn');
+  btn.disabled = true;
+  btn.textContent = 'Logging in…';
+
+  const res = await fetch('/api/ops/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      username: document.getElementById('username').value,
+      password: document.getElementById('password').value,
+    }),
+  });
+
+  if (res.ok) {
+    window.location.href = '/ops/home';
+  } else {
+    const data = await res.json();
+    const err = document.getElementById('error');
+    err.textContent = data.error || 'Login failed';
+    err.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Login';
+  }
+});
+</script>
+</body>
+</html>
