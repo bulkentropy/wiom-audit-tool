@@ -359,7 +359,7 @@ app.get('/api/partner/summary', requirePartner, (req, res) => {
 app.get('/health', (req, res) => res.json({ ok: true, uptime: process.uptime() }));
 
 // ── Start ─────────────────────────────────────────────────────────────────────
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`\n🚀  Wiom Audit Tool running at http://localhost:${PORT}`);
   console.log(`   Ops portal:     http://localhost:${PORT}/ops`);
   console.log(`   Partner portal: http://localhost:${PORT}/partner\n`);
