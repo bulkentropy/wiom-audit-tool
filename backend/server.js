@@ -76,6 +76,8 @@ app.get('/ops/home',          (req, res) => res.sendFile(path.join(__dirname, '.
 app.get('/ops/dashboard',     (req, res) => res.sendFile(path.join(__dirname, '..', 'frontend', 'ops', 'dashboard.html')));
 app.get('/ops/partner-detail',(req, res) => res.sendFile(path.join(__dirname, '..', 'frontend', 'ops', 'partner-detail.html')));
 
+app.get('/presentation',      (req, res) => res.sendFile(path.join(__dirname, '..', 'frontend', 'presentation', 'index.html')));
+
 app.get('/partner',           (req, res) => res.sendFile(path.join(__dirname, '..', 'frontend', 'partner', 'login.html')));
 app.get('/partner/welcome',   (req, res) => res.sendFile(path.join(__dirname, '..', 'frontend', 'partner', 'welcome.html')));
 app.get('/partner/audit',     (req, res) => res.sendFile(path.join(__dirname, '..', 'frontend', 'partner', 'audit.html')));
