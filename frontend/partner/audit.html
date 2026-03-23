@@ -45,6 +45,7 @@
     }
     #scan-confirm-btn { background: #22c55e; color: #fff; }
     #scan-rescan-btn  { background: #444;    color: #fff; }
+    .grey-zone-header { color: #b45309; border-color: #fbbf24; background: #fffbeb; margin-top: 1.2rem; }
   </style>
   <!-- ZXing barcode library (CDN) -->
   <script src="https://unpkg.com/@zxing/library@0.19.1/umd/index.min.js"></script>
@@ -99,6 +100,12 @@
   <!-- Checklist -->
   <div class="checklist-header">Expected Devices</div>
   <ul class="checklist" id="checklist"></ul>
+
+  <!-- Grey zone devices (shown only when unexpected devices are scanned) -->
+  <div class="checklist-header grey-zone-header" id="grey-zone-header" style="display:none;">
+    ⚠ Grey Zone Devices
+  </div>
+  <ul class="checklist" id="grey-zone-list"></ul>
 </div>
 
 <!-- Sticky submit bar -->
@@ -111,11 +118,12 @@
 
 <script>
 // ── State ──────────────────────────────────────────────────────────────────────
-let expectedDevices = [];
-let scannedSet      = new Set();
-let codeReader      = null;
-let scanActive      = false;
-let pendingScan     = null;
+let expectedDevices  = [];
+let greyZoneDevices  = [];   // devices scanned but not on expected list
+let scannedSet       = new Set();
+let codeReader       = null;
+let scanActive       = false;
+let pendingScan      = null;
 
 // ── Auth check ─────────────────────────────────────────────────────────────────
 fetch('/api/partner/me')
@@ -141,15 +149,34 @@ async function loadExpected() {
 function renderChecklist() {
   const list = document.getElementById('checklist');
   list.innerHTML = expectedDevices.map(dev => `
-    <li class="checklist-item ${scannedSet.has(dev.device_id) ? 'verified' : ''} ${dev.grey_zone ? 'grey-zone' : ''}" id="item-${dev.device_id}">
+    <li class="checklist-item ${scannedSet.has(dev.device_id) ? 'verified' : ''}" id="item-${dev.device_id}">
       <span class="check-icon">${scannedSet.has(dev.device_id) ? '✅' : '⬜'}</span>
       <div class="device-info">
         <div class="device-id">${dev.device_id}</div>
         <div class="device-mac">${dev.mac_id}</div>
-        ${dev.grey_zone ? '<span class="grey-tag">⚠ Grey zone</span>' : ''}
       </div>
     </li>
   `).join('');
+
+  // Grey zone section
+  const gzHeader = document.getElementById('grey-zone-header');
+  const gzList   = document.getElementById('grey-zone-list');
+  if (greyZoneDevices.length > 0) {
+    gzHeader.style.display = '';
+    gzList.innerHTML = greyZoneDevices.map(dev => `
+      <li class="checklist-item verified grey-zone" id="item-${dev.device_id}">
+        <span class="check-icon">✅</span>
+        <div class="device-info">
+          <div class="device-id">${dev.device_id}</div>
+          <div class="device-mac">${dev.label || 'Not on expected list'}</div>
+          <span class="grey-tag">⚠ Grey zone</span>
+        </div>
+      </li>
+    `).join('');
+  } else {
+    gzHeader.style.display = 'none';
+    gzList.innerHTML = '';
+  }
 }
 
 function updateProgress() {
@@ -190,14 +217,16 @@ async function processScan(deviceId) {
       item.classList.add('verified', 'flash');
       item.querySelector('.check-icon').textContent = '✅';
     }
-    showToast('✅ ' + deviceId + ' verified!', 'success');
+    showToast('✅ ' + deviceId + ' — matched & verified!', 'success');
     updateProgress();
   } else if (data.status === 'unexpected') {
-    if (data.category === 'STATE_CORRECTED') {
-      showToast(`🔄 ${deviceId} — ${data.description}`, 'success');
-    } else {
-      showToast(`${data.label}: ${deviceId}`, 'warning');
+    // Not on expected list — add as grey zone and tick off
+    const alreadyAdded = greyZoneDevices.some(d => d.device_id === deviceId);
+    if (!alreadyAdded) {
+      greyZoneDevices.push({ device_id: deviceId, label: data.label, category: data.category });
     }
+    renderChecklist();
+    showToast(`⚠ ${deviceId} — not on list, added as grey zone`, 'warning');
     updateProgress();
   } else if (data.error) {
     showToast('Error: ' + data.error, 'error');
