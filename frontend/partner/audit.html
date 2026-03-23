@@ -5,6 +5,47 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Wiom — Live Audit</title>
   <link rel="stylesheet" href="/css/partner.css">
+  <style>
+    #scan-result-bar {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      background: rgba(0,0,0,0.88);
+      color: #fff;
+      padding: 14px 16px 18px;
+      text-align: center;
+      z-index: 20;
+    }
+    #scan-result-label {
+      font-size: 0.78rem;
+      color: #aaa;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 4px;
+    }
+    #scan-result-value {
+      font-size: 1.3rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      color: #fff;
+      margin-bottom: 12px;
+      word-break: break-all;
+    }
+    #scan-result-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+    #scan-confirm-btn, #scan-rescan-btn {
+      padding: 10px 22px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    #scan-confirm-btn { background: #22c55e; color: #fff; }
+    #scan-rescan-btn  { background: #444;    color: #fff; }
+  </style>
   <!-- ZXing barcode library (CDN) -->
   <script src="https://unpkg.com/@zxing/library@0.19.1/umd/index.min.js"></script>
 </head>
@@ -26,6 +67,16 @@
     <div class="scan-line"></div>
   </div>
   <button class="close-cam" id="close-cam-btn" title="Close camera">✕</button>
+
+  <!-- Scan result confirmation bar -->
+  <div id="scan-result-bar" style="display:none;">
+    <div id="scan-result-label">Detected:</div>
+    <div id="scan-result-value"></div>
+    <div id="scan-result-actions">
+      <button id="scan-confirm-btn">✅ Confirm</button>
+      <button id="scan-rescan-btn">🔄 Re-scan</button>
+    </div>
+  </div>
 </div>
 
 <div class="page">
@@ -64,6 +115,7 @@ let expectedDevices = [];
 let scannedSet      = new Set();
 let codeReader      = null;
 let scanActive      = false;
+let pendingScan     = null;
 
 // ── Auth check ─────────────────────────────────────────────────────────────────
 fetch('/api/partner/me')
@@ -179,10 +231,12 @@ async function startCamera() {
     else if (devices.length > 0) deviceId = devices[devices.length - 1].deviceId;
 
     codeReader.decodeFromVideoDevice(deviceId, 'camera-video', (result, err) => {
-      if (result) {
-        const text = result.getText();
-        stopCamera();
-        processScan(text);
+      if (result && !pendingScan) {
+        pendingScan = result.getText();
+        document.getElementById('scan-result-value').textContent = pendingScan;
+        document.getElementById('scan-result-bar').style.display = 'block';
+        // Pause decoding while user reviews
+        codeReader.stopContinuousDecode && codeReader.stopContinuousDecode();
       }
       // err is expected when no barcode in frame — ignore
     });
@@ -193,13 +247,28 @@ async function startCamera() {
 }
 
 function stopCamera() {
-  scanActive = false;
+  scanActive  = false;
+  pendingScan = null;
+  document.getElementById('scan-result-bar').style.display = 'none';
   if (codeReader) {
     try { codeReader.reset(); } catch (e) {}
     codeReader = null;
   }
   document.getElementById('camera-container').classList.remove('active');
 }
+
+// Confirm the detected barcode value
+document.getElementById('scan-confirm-btn').addEventListener('click', () => {
+  const value = pendingScan;
+  stopCamera();
+  if (value) processScan(value);
+});
+
+// Dismiss the result bar and resume scanning
+document.getElementById('scan-rescan-btn').addEventListener('click', () => {
+  pendingScan = null;
+  document.getElementById('scan-result-bar').style.display = 'none';
+});
 
 // ── Manual entry ───────────────────────────────────────────────────────────────
 document.getElementById('manual-toggle').addEventListener('click', () => {
