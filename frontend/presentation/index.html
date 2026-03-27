@@ -153,6 +153,44 @@
     .big-stat.visible { opacity: 1; }
     .big-stat .count-num { color: var(--magenta); font-size: 2.2rem; }
 
+    /* ── Generic animated item ────────────────────────────── */
+    .anim-item {
+      opacity: 0;
+      transform: translateY(22px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+    .anim-item.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .anim-item-left {
+      opacity: 0;
+      transform: translateX(-24px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+    .anim-item-left.visible {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    .anim-item-right {
+      opacity: 0;
+      transform: translateX(24px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+    .anim-item-right.visible {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    .anim-item-scale {
+      opacity: 0;
+      transform: scale(0.88);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+    .anim-item-scale.visible {
+      opacity: 1;
+      transform: scale(1);
+    }
+
     /* ── Slide 2: THE GREY ZONE ───────────────────────────── */
     .lifecycle {
       display: flex;
@@ -435,7 +473,7 @@
   <div class="slide-title">Some devices live in a grey zone</div>
   <div class="slide-subtitle">The device lifecycle has states that aren't being tracked</div>
 
-  <div class="lifecycle">
+  <div class="lifecycle anim-item" id="s1-lifecycle">
     <div class="lc-state">📦<br>at_wiom</div>
     <div class="lc-arrow">→</div>
     <div class="lc-state">🤝<br>at_partner</div>
@@ -447,7 +485,7 @@
     <div class="lc-state">✅<br>returned</div>
   </div>
 
-  <div class="grey-callout">
+  <div class="grey-callout anim-item" id="s1-callout">
     ⚠️ Unlogged pickups, expired plans, cross-partner transfers — all <strong>invisible</strong> in the current system
   </div>
 </section>
@@ -460,15 +498,15 @@
   <div class="slide-subtitle">No travel. No manual checks. Just scan &amp; submit.</div>
 
   <div class="solution-cards">
-    <div class="sol-card">
+    <div class="sol-card anim-item-scale" id="s2-card-0">
       <div class="sol-icon">📱</div>
       <div class="sol-text">Partner scans devices with their <strong>phone camera</strong></div>
     </div>
-    <div class="sol-card">
+    <div class="sol-card anim-item-scale" id="s2-card-1">
       <div class="sol-icon">⚡</div>
       <div class="sol-text">System <strong>auto-reconciles</strong> against dispatch data instantly</div>
     </div>
-    <div class="sol-card">
+    <div class="sol-card anim-item-scale" id="s2-card-2">
       <div class="sol-icon">📊</div>
       <div class="sol-text">Ops sees <strong>full picture</strong> instantly — no field visit needed</div>
     </div>
@@ -482,13 +520,13 @@
   <div class="slide-title">How it works</div>
 
   <div class="how-grid">
-    <div class="how-col">
+    <div class="how-col anim-item-left" id="s3-col-partner">
       <h3>Partner does this</h3>
       <div class="how-step"><span class="step-icon">🔐</span> Log in with username + PIN</div>
       <div class="how-step"><span class="step-icon">📷</span> Scan barcodes with phone camera</div>
       <div class="how-step"><span class="step-icon">✅</span> Submit audit when done</div>
     </div>
-    <div class="how-col">
+    <div class="how-col anim-item-right" id="s3-col-wiom">
       <h3>Wiom gets this</h3>
       <div class="how-step"><span class="step-icon">📊</span> Live dashboard across all partners</div>
       <div class="how-step"><span class="step-icon">🚨</span> Missing &amp; unexpected devices flagged</div>
@@ -497,7 +535,7 @@
     </div>
   </div>
 
-  <div class="how-bottom">
+  <div class="how-bottom anim-item" id="s3-bottom">
     Grey zone devices auto-resolved &nbsp;·&nbsp; Unauthorized possession detected
   </div>
 </section>
@@ -510,22 +548,22 @@
 
   <div class="try-layout">
     <div class="creds-section">
-      <div class="url-display">🌐 wiom-audit-tool.onrender.com</div>
+      <div class="url-display anim-item" id="s4-url">🌐 wiom-audit-tool.onrender.com</div>
 
-      <div class="cred-card">
+      <div class="cred-card anim-item" id="s4-cred-0">
         <div class="cred-role">Ops / Admin</div>
         <div class="cred-field">Username: <span>admin</span></div>
         <div class="cred-field">Password: <span>wiom@2026</span></div>
       </div>
 
-      <div class="cred-card">
+      <div class="cred-card anim-item" id="s4-cred-1">
         <div class="cred-role">Partner (demo)</div>
         <div class="cred-field">Username: <span>partner_sunita</span></div>
         <div class="cred-field">PIN: <span>2345</span></div>
       </div>
     </div>
 
-    <div class="qr-section">
+    <div class="qr-section anim-item" id="s4-qr">
       <div id="qrcode"></div>
       <div class="qr-label">Scan to open<br>Partner Portal</div>
     </div>
@@ -536,10 +574,10 @@
 <!-- SLIDE 6: THANK YOU -->
 <!-- ─────────────────────────────────────────────────────────── -->
 <section class="slide dark" id="slide-5">
-  <div class="thank-you-title">Thank You</div>
-  <div class="team-name">🏆 Prompt Wars 2 — 1st Place</div>
-  <div class="team-date">Wiom Netbox Physical Verification Tool &nbsp;·&nbsp; March 2026</div>
-  <div class="tagline">Built to eliminate field visits, one barcode scan at a time.</div>
+  <div class="thank-you-title anim-item" id="s5-title">Thank You</div>
+  <div class="team-name anim-item" id="s5-team">🏆 Prompt Wars 2 — 1st Place</div>
+  <div class="team-date anim-item" id="s5-date">Wiom Netbox Physical Verification Tool &nbsp;·&nbsp; March 2026</div>
+  <div class="tagline anim-item" id="s5-tagline">Built to eliminate field visits, one barcode scan at a time.</div>
 </section>
 
 <script>
@@ -548,9 +586,14 @@
   const totalSlides  = slides.length;
   let   currentSlide = 0;
 
-  // Bullet reveal state: slideIndex → { total, shown }
+  // Bullet/element reveal config: slideIndex → { ids, shown }
   const bulletConfig = {
-    0: { ids: ['b0-0', 'b0-1', 'b0-2'], shown: 0 }
+    0: { ids: ['b0-0', 'b0-1', 'b0-2'], shown: 0 },
+    1: { ids: ['s1-lifecycle', 's1-callout'], shown: 0 },
+    2: { ids: ['s2-card-0', 's2-card-1', 's2-card-2'], shown: 0 },
+    3: { ids: ['s3-col-partner', 's3-col-wiom', 's3-bottom'], shown: 0 },
+    4: { ids: ['s4-url', 's4-cred-0', 's4-cred-1', 's4-qr'], shown: 0 },
+    5: { ids: ['s5-title', 's5-team', 's5-date', 's5-tagline'], shown: 0 },
   };
 
   // ── Init ─────────────────────────────────────────────────────
@@ -577,24 +620,29 @@
     currentSlide = n;
     slides[currentSlide].classList.add('active');
 
-    // Reset bullets on new slide
+    // Reset all animated items on the new slide
     const bc = bulletConfig[currentSlide];
     if (bc) {
       bc.shown = 0;
       bc.ids.forEach(id => {
-        document.getElementById(id).classList.remove('visible');
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('visible');
       });
-      document.getElementById('big-stat-0') && document.getElementById('big-stat-0').classList.remove('visible');
+    }
+    // Always reset slide 0 extras
+    if (currentSlide === 0) {
+      const stat = document.getElementById('big-stat-0');
+      if (stat) stat.classList.remove('visible');
     }
 
-    // Trigger count-up on slide 1 only after all bullets show
     updateUI();
   }
 
   function revealNextBullet(slideIdx) {
     const bc = bulletConfig[slideIdx];
     if (!bc || bc.shown >= bc.ids.length) return;
-    document.getElementById(bc.ids[bc.shown]).classList.add('visible');
+    const el = document.getElementById(bc.ids[bc.shown]);
+    if (el) el.classList.add('visible');
     bc.shown++;
 
     // After last bullet on slide 0, show big stat and count up
@@ -661,7 +709,6 @@
   // Click anywhere on slide to advance
   slides.forEach(slide => {
     slide.addEventListener('click', (e) => {
-      // Don't fire if clicking a button or the QR section
       if (e.target.closest('.nav-btn')) return;
       advance();
     });
