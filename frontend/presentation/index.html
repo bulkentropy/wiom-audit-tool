@@ -16,14 +16,15 @@
       --secondary:  #443152;
       --dark:       #161021;
       --dark-2:     #352D42;
-      --text:       #161021;
-      --muted:      #665E75;
+      --text:       #FAF9FC;
+      --muted:      rgba(255,255,255,0.5);
+      --card-bg:    #1e1830;
     }
 
     html, body {
       height: 100%;
       font-family: 'Inter', sans-serif;
-      background: #fff;
+      background: #161021;
       overflow: hidden;
       user-select: none;
     }
@@ -55,14 +56,14 @@
       position: fixed;
       bottom: 24px;
       background: transparent;
-      border: 2px solid #ddd;
+      border: 2px solid #3a3050;
       border-radius: 50%;
       width: 44px; height: 44px;
       font-size: 1.1rem;
       cursor: pointer;
       z-index: 100;
       transition: border-color 0.2s, color 0.2s;
-      color: #aaa;
+      color: #665E75;
       display: flex; align-items: center; justify-content: center;
     }
     .nav-btn:hover { border-color: var(--brand); color: var(--brand); }
@@ -78,6 +79,8 @@
       align-items: center;
       justify-content: center;
       padding: 60px 80px 80px;
+      background: #161021;
+      color: var(--text);
       opacity: 0;
       pointer-events: none;
       transition: opacity 0.3s ease;
@@ -86,10 +89,6 @@
     .slide.active {
       opacity: 1;
       pointer-events: auto;
-    }
-    .slide.dark {
-      background: var(--dark);
-      color: #fff;
     }
 
     /* ── Typography ───────────────────────────────────────── */
@@ -144,9 +143,9 @@
       margin-top: 0.5rem;
       font-size: 1.5rem;
       font-weight: 700;
-      color: var(--brand-dim);
+      color: var(--brand);
       text-align: center;
-      border-top: 2px solid #eee;
+      border-top: 2px solid #2e2540;
       padding-top: 1rem;
       opacity: 0;
       transition: opacity 0.5s ease 0.2s;
@@ -204,7 +203,7 @@
       max-width: 860px;
     }
     .lc-state {
-      background: #fff;
+      background: var(--card-bg);
       border: 2.5px solid var(--brand);
       border-radius: 10px;
       padding: 12px 20px;
@@ -213,7 +212,7 @@
       color: var(--text);
       text-align: center;
       min-width: 110px;
-      box-shadow: 0 2px 8px rgba(217,0,141,0.12);
+      box-shadow: 0 2px 8px rgba(217,0,141,0.18);
     }
     .lc-arrow {
       font-size: 1.6rem;
@@ -222,13 +221,13 @@
       font-weight: 700;
     }
     .grey-callout {
-      background: #fff3cd;
-      border: 2px solid #ffc107;
+      background: rgba(255, 128, 0, 0.1);
+      border: 2px solid #FF8000;
       border-radius: 10px;
       padding: 14px 24px;
       font-size: 1.1rem;
       font-weight: 600;
-      color: #7a5c00;
+      color: #FFE6CC;
       max-width: 680px;
       text-align: center;
     }
@@ -267,7 +266,7 @@
       margin-bottom: 1.5rem;
     }
     .how-col {
-      background: #f8f8ff;
+      background: var(--card-bg);
       border: 2px solid var(--brand);
       border-radius: 16px;
       padding: 28px 28px 24px;
@@ -275,7 +274,7 @@
     .how-col h3 {
       font-size: 1.1rem;
       font-weight: 800;
-      color: var(--brand-dim);
+      color: var(--brand);
       text-transform: uppercase;
       letter-spacing: 0.08em;
       margin-bottom: 20px;
@@ -316,12 +315,12 @@
     .url-display {
       font-size: 1.2rem;
       font-weight: 700;
-      color: var(--brand-dim);
+      color: var(--brand);
       margin-bottom: 1.5rem;
       text-align: center;
     }
     .cred-card {
-      background: #f8f8ff;
+      background: var(--card-bg);
       border: 2px solid var(--brand);
       border-radius: 14px;
       padding: 18px 24px;
@@ -332,7 +331,7 @@
       font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 0.1em;
-      color: var(--brand-dim);
+      color: var(--brand);
       margin-bottom: 8px;
     }
     .cred-card .cred-field {
@@ -344,10 +343,10 @@
     .cred-card .cred-field span {
       font-family: 'Courier New', monospace;
       font-size: 1.1rem;
-      background: #eee;
+      background: #2e2540;
       padding: 2px 8px;
       border-radius: 4px;
-      color: #333;
+      color: #FAF9FC;
     }
     .qr-section {
       display: flex;
@@ -356,7 +355,7 @@
       gap: 12px;
     }
     #qrcode {
-      background: #fff;
+      background: #FAF9FC;
       padding: 12px;
       border: 3px solid var(--brand);
       border-radius: 12px;
