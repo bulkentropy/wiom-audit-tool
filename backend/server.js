@@ -130,6 +130,7 @@ app.get('/api/ops/summary', requireOps, (req, res) => {
       verified,
       missing,
       unexpected,
+      no_devices:   !!(audit.noDevices),
       submitted_at: audit.submittedAt || null,
     };
   });
@@ -314,7 +315,9 @@ app.post('/api/partner/scan', requirePartner, (req, res) => {
 });
 
 app.post('/api/partner/submit', requirePartner, (req, res) => {
-  const partnerId = req.session.partnerId;
+  const partnerId  = req.session.partnerId;
+  const no_devices = !!(req.body && req.body.no_devices);
+
   if (!auditSessions.has(partnerId)) {
     auditSessions.set(partnerId, { scanned: new Map(), submittedAt: null });
   }
@@ -323,6 +326,7 @@ app.post('/api/partner/submit', requirePartner, (req, res) => {
     return res.status(400).json({ error: 'Already submitted' });
   }
   audit.submittedAt = new Date().toISOString();
+  audit.noDevices   = no_devices;
 
   const expected = expectedListCache.get(partnerId) || [];
   const scanned  = audit.scanned;
@@ -336,7 +340,7 @@ app.post('/api/partner/submit', requirePartner, (req, res) => {
     if (!expected.some(e => e.device_id === id)) unexpected++;
   }
 
-  res.json({ ok: true, verified, missing, unexpected, submitted_at: audit.submittedAt });
+  res.json({ ok: true, verified, missing, unexpected, no_devices, submitted_at: audit.submittedAt });
 });
 
 app.get('/api/partner/summary', requirePartner, (req, res) => {
@@ -354,7 +358,7 @@ app.get('/api/partner/summary', requirePartner, (req, res) => {
     if (!expected.some(e => e.device_id === id)) unexpected++;
   }
 
-  res.json({ verified, missing, unexpected, submitted: !!audit.submittedAt, submitted_at: audit.submittedAt });
+  res.json({ verified, missing, unexpected, no_devices: !!audit.noDevices, submitted: !!audit.submittedAt, submitted_at: audit.submittedAt });
 });
 
 // ── Health check ──────────────────────────────────────────────────────────────

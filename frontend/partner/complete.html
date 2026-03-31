@@ -75,7 +75,11 @@ async function loadSummary(alreadySubmitted) {
 
   const submitted = alreadySubmitted || data.submitted;
 
-  if (data.missing === 0 && !submitted) {
+  if (data.no_devices && !submitted) {
+    document.getElementById('hero-icon').textContent  = '📭';
+    document.getElementById('hero-title').textContent = 'No devices available';
+    document.getElementById('hero-sub').textContent   = 'You\'ve indicated no physical devices are available. Submit to confirm.';
+  } else if (data.missing === 0 && !submitted) {
     document.getElementById('hero-icon').textContent  = '🎉';
     document.getElementById('hero-title').textContent = 'All devices accounted for!';
     document.getElementById('hero-sub').textContent   = 'Great work! Review and submit below.';
@@ -87,7 +91,7 @@ async function loadSummary(alreadySubmitted) {
 
   if (submitted) {
     document.getElementById('hero-icon').textContent  = '✅';
-    document.getElementById('hero-title').textContent = 'Audit Submitted';
+    document.getElementById('hero-title').textContent = data.no_devices ? 'Submitted — No Devices Reported' : 'Audit Submitted';
     document.getElementById('hero-sub').textContent   = '';
     document.getElementById('submit-area').style.display   = 'none';
     document.getElementById('submitted-area').style.display = 'block';

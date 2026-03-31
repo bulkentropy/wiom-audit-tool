@@ -46,6 +46,16 @@
     #scan-confirm-btn { background: #22c55e; color: #fff; }
     #scan-rescan-btn  { background: #444;    color: #fff; }
     .grey-zone-header { color: #b45309; border-color: #fbbf24; background: #fffbeb; margin-top: 1.2rem; }
+    .mystery-header { color: #7c3aed; border-color: #a78bfa; background: #f5f3ff; margin-top: 1.2rem; }
+    .mystery-device .check-icon { color: #7c3aed; }
+    #no-devices-section { margin-top: 1.8rem; text-align: center; }
+    #no-devices-btn {
+      background: #6b7280; color: #fff;
+      padding: 12px 28px; border: none; border-radius: 8px;
+      font-size: 1rem; font-weight: 600; cursor: pointer;
+    }
+    #no-devices-btn:active { background: #4b5563; }
+    #no-devices-hint { font-size: .8rem; color: #9ca3af; margin-top: 8px; }
   </style>
   <!-- ZXing barcode library (CDN) -->
   <script src="https://unpkg.com/@zxing/library@0.19.1/umd/index.min.js"></script>
@@ -106,6 +116,18 @@
     ⚠ Grey Zone Devices
   </div>
   <ul class="checklist" id="grey-zone-list"></ul>
+
+  <!-- Mystery devices (unknown device IDs not in Wiom's system) -->
+  <div class="checklist-header mystery-header" id="mystery-header" style="display:none;">
+    🚨 Mystery Devices
+  </div>
+  <ul class="checklist" id="mystery-list"></ul>
+
+  <!-- No devices available — shown only when nothing has been scanned yet -->
+  <div id="no-devices-section" style="display:none;">
+    <button id="no-devices-btn">No devices available</button>
+    <p id="no-devices-hint">Tap if you have no physical devices to scan at this location.</p>
+  </div>
 </div>
 
 <!-- Sticky submit bar -->
@@ -120,6 +142,7 @@
 // ── State ──────────────────────────────────────────────────────────────────────
 let expectedDevices  = [];
 let greyZoneDevices  = [];   // devices scanned but not on expected list
+let mysteryDevices   = [];   // UNKNOWN_DEVICE — not in Wiom's system at all
 let scannedSet       = new Set();
 let codeReader       = null;
 let scanActive       = false;
@@ -177,6 +200,26 @@ function renderChecklist() {
     gzHeader.style.display = 'none';
     gzList.innerHTML = '';
   }
+
+  // Mystery devices section
+  const mysteryHeader = document.getElementById('mystery-header');
+  const mysteryList   = document.getElementById('mystery-list');
+  if (mysteryDevices.length > 0) {
+    mysteryHeader.style.display = '';
+    mysteryList.innerHTML = mysteryDevices.map(dev => `
+      <li class="checklist-item mystery-device" id="item-mystery-${dev.raw_id}">
+        <span class="check-icon">🚨</span>
+        <div class="device-info">
+          <div class="device-id">Mystery Device detected</div>
+          <div class="device-mac">Scanned: ${dev.raw_id}</div>
+          <span class="grey-tag" style="background:#ede9fe; color:#5b21b6; border-color:#a78bfa;">Not in Wiom system</span>
+        </div>
+      </li>
+    `).join('');
+  } else {
+    mysteryHeader.style.display = 'none';
+    mysteryList.innerHTML = '';
+  }
 }
 
 function updateProgress() {
@@ -189,8 +232,9 @@ function updateProgress() {
     `${remaining} remaining of ${total} (${verified} verified)`;
   document.getElementById('progress-bar').style.width = `${pct}%`;
 
-  // Show submit bar once at least 1 scanned
-  document.getElementById('submit-bar').style.display = scannedSet.size > 0 ? 'block' : 'none';
+  const hasAnyScan = scannedSet.size > 0 || greyZoneDevices.length > 0 || mysteryDevices.length > 0;
+  document.getElementById('submit-bar').style.display       = hasAnyScan ? 'block' : 'none';
+  document.getElementById('no-devices-section').style.display = hasAnyScan ? 'none' : 'block';
 }
 
 // ── Scan processing ────────────────────────────────────────────────────────────
@@ -220,13 +264,23 @@ async function processScan(deviceId) {
     showToast('✅ ' + deviceId + ' — matched & verified!', 'success');
     updateProgress();
   } else if (data.status === 'unexpected') {
-    // Not on expected list — add as grey zone and tick off
-    const alreadyAdded = greyZoneDevices.some(d => d.device_id === deviceId);
-    if (!alreadyAdded) {
-      greyZoneDevices.push({ device_id: deviceId, label: data.label, category: data.category });
+    if (data.category === 'UNKNOWN_DEVICE') {
+      // Not in Wiom's system at all — mystery device
+      const alreadyAdded = mysteryDevices.some(d => d.raw_id === deviceId);
+      if (!alreadyAdded) {
+        mysteryDevices.push({ raw_id: deviceId });
+      }
+      renderChecklist();
+      showToast(`🚨 ${deviceId} — unknown device, logged as mystery`, 'warning');
+    } else {
+      // Not on expected list but known — add as grey zone
+      const alreadyAdded = greyZoneDevices.some(d => d.device_id === deviceId);
+      if (!alreadyAdded) {
+        greyZoneDevices.push({ device_id: deviceId, label: data.label, category: data.category });
+      }
+      renderChecklist();
+      showToast(`⚠ ${deviceId} — not on list, added as grey zone`, 'warning');
     }
-    renderChecklist();
-    showToast(`⚠ ${deviceId} — not on list, added as grey zone`, 'warning');
     updateProgress();
   } else if (data.error) {
     showToast('Error: ' + data.error, 'error');
@@ -316,6 +370,27 @@ document.getElementById('manual-submit-btn').addEventListener('click', () => {
 
 document.getElementById('manual-input').addEventListener('keydown', (e) => {
   if (e.key === 'Enter') document.getElementById('manual-submit-btn').click();
+});
+
+// ── No devices available ───────────────────────────────────────────────────────
+document.getElementById('no-devices-btn').addEventListener('click', async () => {
+  if (!confirm('Confirm: you have no physical devices at this location to scan?')) return;
+  const btn = document.getElementById('no-devices-btn');
+  btn.disabled    = true;
+  btn.textContent = 'Submitting…';
+  const res  = await fetch('/api/partner/submit', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ no_devices: true }),
+  });
+  const data = await res.json();
+  if (res.ok) {
+    window.location.href = '/partner/complete';
+  } else {
+    btn.disabled    = false;
+    btn.textContent = 'No devices available';
+    showToast(data.error || 'Failed to submit', 'error');
+  }
 });
 
 // ── Toast ──────────────────────────────────────────────────────────────────────
