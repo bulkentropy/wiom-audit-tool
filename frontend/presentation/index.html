@@ -10,13 +10,14 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --magenta: #ff00ff;
-      --magenta-dim: #cc00cc;
-      --magenta-bg: rgba(255, 0, 255, 0.08);
-      --dark: #0e0e1a;
-      --dark-2: #1a1a2e;
-      --text: #1a1a2e;
-      --muted: #555;
+      --brand:      #D9008D;
+      --brand-dim:  #9d0067;
+      --brand-bg:   rgba(217, 0, 141, 0.08);
+      --secondary:  #443152;
+      --dark:       #161021;
+      --dark-2:     #352D42;
+      --text:       #161021;
+      --muted:      #665E75;
     }
 
     html, body {
@@ -32,10 +33,10 @@
       position: fixed;
       top: 0; left: 0;
       height: 4px;
-      background: var(--magenta);
+      background: var(--brand);
       transition: width 0.4s ease;
       z-index: 100;
-      box-shadow: 0 0 8px var(--magenta);
+      box-shadow: 0 0 8px var(--brand);
     }
 
     /* ── Slide counter ────────────────────────────────────── */
@@ -64,7 +65,7 @@
       color: #aaa;
       display: flex; align-items: center; justify-content: center;
     }
-    .nav-btn:hover { border-color: var(--magenta); color: var(--magenta); }
+    .nav-btn:hover { border-color: var(--brand); color: var(--brand); }
     #btn-prev { left: calc(50% - 54px); }
     #btn-next { left: calc(50% + 10px); }
 
@@ -95,7 +96,7 @@
     .slide-title {
       font-size: 2.8rem;
       font-weight: 900;
-      color: var(--magenta);
+      color: var(--brand);
       margin-bottom: 0.3em;
       text-align: center;
       line-height: 1.15;
@@ -119,8 +120,8 @@
       align-items: flex-start;
       gap: 16px;
       padding: 18px 24px;
-      border-left: 4px solid var(--magenta);
-      background: var(--magenta-bg);
+      border-left: 4px solid var(--brand);
+      background: var(--brand-bg);
       border-radius: 0 10px 10px 0;
       margin-bottom: 14px;
       font-size: 1.25rem;
@@ -143,7 +144,7 @@
       margin-top: 0.5rem;
       font-size: 1.5rem;
       font-weight: 700;
-      color: var(--magenta-dim);
+      color: var(--brand-dim);
       text-align: center;
       border-top: 2px solid #eee;
       padding-top: 1rem;
@@ -151,7 +152,7 @@
       transition: opacity 0.5s ease 0.2s;
     }
     .big-stat.visible { opacity: 1; }
-    .big-stat .count-num { color: var(--magenta); font-size: 2.2rem; }
+    .big-stat .count-num { color: var(--brand); font-size: 2.2rem; }
 
     /* ── Generic animated item ────────────────────────────── */
     .anim-item {
@@ -204,7 +205,7 @@
     }
     .lc-state {
       background: #fff;
-      border: 2.5px solid var(--magenta);
+      border: 2.5px solid var(--brand);
       border-radius: 10px;
       padding: 12px 20px;
       font-size: 0.95rem;
@@ -212,11 +213,11 @@
       color: var(--text);
       text-align: center;
       min-width: 110px;
-      box-shadow: 0 2px 8px rgba(255,0,255,0.12);
+      box-shadow: 0 2px 8px rgba(217,0,141,0.12);
     }
     .lc-arrow {
       font-size: 1.6rem;
-      color: var(--magenta);
+      color: var(--brand);
       padding: 0 4px;
       font-weight: 700;
     }
@@ -242,8 +243,8 @@
     }
     .sol-card {
       flex: 1;
-      background: var(--magenta-bg);
-      border: 2px solid var(--magenta);
+      background: var(--brand-bg);
+      border: 2px solid var(--brand);
       border-radius: 16px;
       padding: 32px 24px;
       text-align: center;
@@ -267,18 +268,18 @@
     }
     .how-col {
       background: #f8f8ff;
-      border: 2px solid var(--magenta);
+      border: 2px solid var(--brand);
       border-radius: 16px;
       padding: 28px 28px 24px;
     }
     .how-col h3 {
       font-size: 1.1rem;
       font-weight: 800;
-      color: var(--magenta-dim);
+      color: var(--brand-dim);
       text-transform: uppercase;
       letter-spacing: 0.08em;
       margin-bottom: 20px;
-      border-bottom: 2px solid var(--magenta);
+      border-bottom: 2px solid var(--brand);
       padding-bottom: 8px;
     }
     .how-step {
@@ -294,10 +295,10 @@
     .how-bottom {
       font-size: 1rem;
       font-weight: 700;
-      color: var(--magenta-dim);
+      color: var(--brand-dim);
       text-align: center;
       max-width: 700px;
-      background: var(--magenta-bg);
+      background: var(--brand-bg);
       border-radius: 10px;
       padding: 12px 24px;
     }
@@ -315,13 +316,13 @@
     .url-display {
       font-size: 1.2rem;
       font-weight: 700;
-      color: var(--magenta-dim);
+      color: var(--brand-dim);
       margin-bottom: 1.5rem;
       text-align: center;
     }
     .cred-card {
       background: #f8f8ff;
-      border: 2px solid var(--magenta);
+      border: 2px solid var(--brand);
       border-radius: 14px;
       padding: 18px 24px;
       margin-bottom: 16px;
@@ -331,7 +332,7 @@
       font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 0.1em;
-      color: var(--magenta-dim);
+      color: var(--brand-dim);
       margin-bottom: 8px;
     }
     .cred-card .cred-field {
@@ -357,7 +358,7 @@
     #qrcode {
       background: #fff;
       padding: 12px;
-      border: 3px solid var(--magenta);
+      border: 3px solid var(--brand);
       border-radius: 12px;
     }
     .qr-label {
@@ -371,8 +372,8 @@
     .thank-you-title {
       font-size: 5rem;
       font-weight: 900;
-      color: var(--magenta);
-      text-shadow: 0 0 40px rgba(255,0,255,0.5);
+      color: var(--brand);
+      text-shadow: 0 0 40px rgba(217,0,141,0.55);
       margin-bottom: 0.5rem;
       text-align: center;
     }
@@ -508,7 +509,7 @@
     </div>
     <div class="sol-card anim-item-scale" id="s2-card-2">
       <div class="sol-icon">📊</div>
-      <div class="sol-text">Ops sees <strong>full picture</strong> instantly — no field visit needed</div>
+      <div class="sol-text">Ops sees <strong>full picture</strong> — verified, missing, grey zone &amp; mystery devices</div>
     </div>
   </div>
 </section>
@@ -524,19 +525,20 @@
       <h3>Partner does this</h3>
       <div class="how-step"><span class="step-icon">🔐</span> Log in with username + PIN</div>
       <div class="how-step"><span class="step-icon">📷</span> Scan barcodes with phone camera</div>
+      <div class="how-step"><span class="step-icon">📭</span> No devices? Submit directly — no scan needed</div>
       <div class="how-step"><span class="step-icon">✅</span> Submit audit when done</div>
     </div>
     <div class="how-col anim-item-right" id="s3-col-wiom">
       <h3>Wiom gets this</h3>
       <div class="how-step"><span class="step-icon">📊</span> Live dashboard across all partners</div>
-      <div class="how-step"><span class="step-icon">🚨</span> Missing &amp; unexpected devices flagged</div>
+      <div class="how-step"><span class="step-icon">🚨</span> Missing, unexpected &amp; mystery devices flagged</div>
       <div class="how-step"><span class="step-icon">🔀</span> Automatic state corrections applied</div>
       <div class="how-step"><span class="step-icon">📥</span> CSV reports ready to download</div>
     </div>
   </div>
 
   <div class="how-bottom anim-item" id="s3-bottom">
-    Grey zone devices auto-resolved &nbsp;·&nbsp; Unauthorized possession detected
+    Grey zone &amp; mystery devices auto-resolved &nbsp;·&nbsp; Zero-device locations tracked
   </div>
 </section>
 
@@ -688,7 +690,7 @@
       text: 'https://wiom-audit-tool-production.up.railway.app/partner',
       width: 160,
       height: 160,
-      colorDark: '#0e0e1a',
+      colorDark: '#161021',
       colorLight: '#ffffff',
       correctLevel: QRCode.CorrectLevel.M,
     });
